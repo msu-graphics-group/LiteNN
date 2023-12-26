@@ -97,9 +97,23 @@ namespace tp
   void sum(const TensorView &t, TensorView out, const std::vector<int> &dimensions);
   void add(TensorView t1, const TensorView &t2);
   void add(const TensorView &t1, const TensorView &t2, TensorView out);
-  void mul(TensorView t1, float a);
-  void mul(const TensorView &t1, float a, TensorView out);
   void vector_outer_product(const TensorView &v1, const TensorView &v2, TensorView out);
+
+  #define FOR_EACH(t, out, Func)                      \
+  {                                                   \
+    assert(t.Dim == out.Dim);                         \
+    for (int i = 0; i < t.Dim; i++)                   \
+      assert(t.scheme[i].size == out.scheme[i].size); \
+    for (IndexType i = 0; i < t.total_size; i++)      \
+      out.get(i) = Func(t.get(i));                    \
+  }
+
+  void add(const TensorView &t, ValueType a, TensorView out) { FOR_EACH(t, out, a * ) }
+  void add(TensorView t, ValueType a) { add(t, a, t); }
+  void mul(const TensorView &t, ValueType a, TensorView out) { FOR_EACH(t, out, a + ) }
+  void mul(TensorView t, ValueType a) { mul(t, a, t); }
+
+  #define FOR_EACH_INPLACE(t, Func) FOR_EACH(t, t, Func)
 
   //TODO: support non-compact tensors
   #define TV_ITERATE(t, step_size, offset, F) \
@@ -393,31 +407,6 @@ namespace tp
     {
       for (IndexType i = 0; i < step_size; i++)
         out.get(offset2 + i) = t1.get(offset1 + i) + t2.get(i);
-    });
-  }
-
-  //t1 *= a
-  void mul(TensorView t1, float a)
-  {
-    mul(t1, a, t1);
-  }
-
-  //out = a*t1
-  //Perform element-wise operation
-  //out should have exactly the same size as t1 by every dimension
-  void mul(const TensorView &t1, float a, TensorView out)
-  {
-    assert(t1.Dim == out.Dim);
-    for (int i=0;i<t1.Dim;i++)
-      assert(t1.scheme[i].size == out.scheme[i].size);
-    
-    IndexType step_size = t1.total_size;
-    IndexType offset1 = 0;
-    IndexType offset2 = 0;
-    TV_ITERATE_2(t1,step_size,offset1, out,step_size,offset2,
-    {
-      for (IndexType i = 0; i < step_size; i++)
-        out.get(offset2 + i) = a*t1.get(offset1 + i);
     });
   }
 
@@ -882,6 +871,14 @@ private:
   int main(int argc, char **argv)
   {
     /*
+    std::vector<float> values(1000*1000, 2.5);
+    TensorView tv(values.data(), Shape{1000, 1000});
+    //print(slice(tv, 0));
+    for (int i=0;i<1000;i++)
+    FOR_EACH_INPLACE(tv, [](float v) -> float { return 2*v;})
+    //print(slice(tv, 0));
+    return 0;
+
     std::vector<float> values = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     TensorView tv1(values.data(), Shape{10});
     TensorView tv2(values.data(), Shape{4, 4});
