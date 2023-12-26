@@ -18,11 +18,10 @@ namespace tp
   using IndexType = uint32_t;
   using Shape = std::vector<IndexType>;
   using ValueType = float;
-  constexpr int MAX_DIM = 8;
+  constexpr int MAX_DIM = 4;
   struct DimInfo
   {
     IndexType size = 0;
-    IndexType step = 0;
   };
   using Scheme = std::array<DimInfo, MAX_DIM>;
   using FullIndex = std::array<IndexType, MAX_DIM>;
@@ -46,6 +45,14 @@ namespace tp
     inline IndexType size(int dimension) const
     { return scheme[dimension].size; }
 
+    inline IndexType step(int dimension) const
+    { 
+      IndexType s = 1;
+      for (int i=0;i<dimension;i++)
+        s *= scheme[i].size;
+      return s; 
+    }
+
     inline const ValueType &get(IndexType i) const 
       { return _data[i]; }
     inline ValueType &get(IndexType i) 
@@ -53,26 +60,21 @@ namespace tp
 
     //TODO: support non-compact tensors
     inline const ValueType &get(IndexType column, IndexType row) const 
-      { return _data[scheme[1].step*row + column]; }
+      { return _data[step(1)*row + column]; }
     inline ValueType &get(IndexType column, IndexType row) 
-      { return _data[scheme[1].step*row + column]; }
+      { return _data[step(1)*row + column]; }
   
     //TODO: support non-compact tensors
     inline const ValueType &get(IndexType column, IndexType row, IndexType layer) const 
-      { return _data[scheme[2].step*layer + scheme[1].step*row + column]; }
+      { return _data[step(2)*layer + step(1)*row + column]; }
     inline ValueType &get(IndexType column, IndexType row, IndexType layer) 
-      { return _data[scheme[2].step*layer + scheme[1].step*row + column]; }
+      { return _data[step(2)*layer + step(1)*row + column]; }
   
     //TODO: support non-compact tensors
     inline const ValueType &get(IndexType column, IndexType row, IndexType layer, IndexType group) const 
-      { return _data[scheme[3].step*group + scheme[2].step*layer + scheme[1].step*row + column]; }
+      { return _data[step(3)*group + step(2)*layer + step(1)*row + column]; }
     inline ValueType &get(IndexType column, IndexType row, IndexType layer, IndexType group) 
-      { return _data[scheme[3].step*group + scheme[2].step*layer + scheme[1].step*row + column]; }
-  };
-
-  class Tensor
-  {
-
+      { return _data[step(3)*group + step(2)*layer + step(1)*row + column]; }
   };
 
   int get_dimensions(const Scheme &scheme);
@@ -148,14 +150,9 @@ namespace tp
   Scheme get_scheme(const std::vector<IndexType> &sizes)
   {
     assert(sizes.size() <= MAX_DIM);
-    IndexType step = 1;
     Scheme s;
     for (int i=0;i<sizes.size();i++)
-    {
       s[i].size = sizes[i];
-      s[i].step = step;
-      step *= sizes[i];
-    }
     return s;
   }
 
@@ -164,7 +161,10 @@ namespace tp
     if (Dim == 0)
       return 0;
     //TODO: support non-compact tensors
-    return scheme[Dim-1].size*scheme[Dim-1].step;
+    IndexType total_sz = 1;
+    for (int i=0;i<Dim;i++)
+      total_sz *= scheme[i].size;
+    return total_sz;
   }
 
   IndexType get_total_size(const std::vector<IndexType> &sizes)
@@ -252,10 +252,7 @@ namespace tp
     //[20,10,<5>] --> [2,10,10,<5>] is ok
     //[10, <20> ] --> [2, ]
     for (int i=0;i<non_compact;i++)
-    {
       assert(t.scheme[t.Dim-i-1].size == scheme[new_dims-i-1].size);
-      assert(t.scheme[t.Dim-i-1].step == scheme[new_dims-i-1].step);
-    }
 
     return TensorView(t._data, scheme);
   }
@@ -275,7 +272,7 @@ namespace tp
       new_scheme[i] = t.scheme[i];
 
     //TODO: support non-compact tensors
-    IndexType offset = index*t.scheme[t.Dim-1].step;
+    IndexType offset = index*t.step(t.Dim-1);
     return TensorView(t._data + offset, new_scheme);
   }
 
@@ -289,7 +286,7 @@ namespace tp
 
     Scheme new_scheme = t.scheme;
     new_scheme[t.Dim-1].size = range.second - range.first;
-    IndexType offset = range.first*t.scheme[t.Dim-1].step;
+    IndexType offset = range.first*t.step(t.Dim-1);
     return TensorView(t._data + offset, new_scheme);
   }
 
@@ -886,15 +883,6 @@ private:
   {
     /*
     std::vector<float> values = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-    Scheme s1;
-    s1[0] = {10,1};
-    Scheme s2;
-    s2[0] = {4,1};
-    s2[1] = {4,4};
-    Scheme s3;
-    s3[0] = {3,1};
-    s3[1] = {2,3};
-    s3[2] = {2,6};
     TensorView tv1(values.data(), Shape{10});
     TensorView tv2(values.data(), Shape{4, 4});
     TensorView tv3(values.data(), Shape{2, 2, 4});
