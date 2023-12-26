@@ -89,6 +89,7 @@ namespace tp
   TensorView slice(const TensorView &t, std::pair<IndexType, IndexType> range);
 
   void fill(TensorView &t, ValueType value);
+  void copy(const TensorView &t, TensorView out);
   void vec_mul(const TensorView &t, const TensorView &v, TensorView out);
   void transpose(const TensorView &t, TensorView out);
   void sum(const TensorView &t, TensorView out, const std::vector<int> &dimensions);
@@ -96,6 +97,7 @@ namespace tp
   void add(const TensorView &t1, const TensorView &t2, TensorView out);
   void mul(TensorView t1, float a);
   void mul(const TensorView &t1, float a, TensorView out);
+  void vector_outer_product(const TensorView &v1, const TensorView &v2, TensorView out);
 
   //TODO: support non-compact tensors
   #define TV_ITERATE(t, step_size, offset, F) \
@@ -302,6 +304,13 @@ namespace tp
     }
   }
 
+  void copy(const TensorView &t, TensorView out)
+  {
+    assert(t.total_size == out.total_size);
+    assert(compact_dims(t.scheme) == t.Dim);
+    assert(compact_dims(out.scheme) == out.Dim);
+  }
+
   // Multiplies tensor with Dim>=2 by a vertex
   // if Dim=2 it is standart matrix-vector multiplication
   // if Dim>2 tensor is treated as a (Dim-2)-dimentional array of matrices, each
@@ -491,38 +500,27 @@ void DenseLayer::init(float *param_mem, float *gradient_mem, float *tmp_mem)
 
 void DenseLayer::forward(const TensorView &input, TensorView &output)
 {
-  int batch_size = input.size(1);
-  for (int i=0;i<batch_size;i++)
-    vec_mul(A, slice(input, i), slice(output, i));
+  //y = A*x + b
+  vec_mul(A, input, output);
   add(output, b);
 }
 
 void DenseLayer::backward(const TensorView &input, const TensorView &output, 
-                        const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer)
+                          const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer)
 {
-  int batch_size = input.size(1);
   if (!first_layer)
   {
     //dLoss_dInput = A^T * dloss_dOutput
     transpose(A, At);
-    for (int i=0;i<batch_size;i++)
-      vec_mul(At, slice(dLoss_dOutput, i), slice(dLoss_dInput, i));
+    vec_mul(At, dLoss_dOutput, dLoss_dInput);
   }
   
-  //dLoss_dA = average{batches}(dLoss_dOutput ⊗ input)
-  fill(dLoss_dA, 0);
-  for (int i=0;i<batch_size;i++)
-  {
-    vector_outer_product(slice(dLoss_dOutput, i), slice(input, i), op);
-    add(dLoss_dA, op);
-  }
-  mul(dLoss_dA, 1.0f/batch_size);
+  //dLoss_dA += dLoss_dOutput ⊗ input
+  vector_outer_product(dLoss_dOutput, input, op);
+  add(dLoss_dA, op);
 
-  //dLoss_db = average{batches}(dLoss_dOutput);
-  fill(dLoss_db, 0);
-  for (int i=0;i<batch_size;i++)
-    add(dLoss_db, slice(dLoss_dOutput, i));
-  mul(dLoss_db, 1.0f/batch_size);
+  //dLoss_db += dLoss_dOutput;
+  add(dLoss_db, dLoss_dOutput);
 }
 
 int DenseLayer::parameters_memory_size()
@@ -542,6 +540,7 @@ public:
   {
     params_count = _params_count;
   }
+  virtual ~Optimizer() {};
   virtual void step(float *params_ptr, float const *grad_ptr) = 0;
 protected:
   int params_count = 0;
@@ -600,23 +599,28 @@ private:
 };
 
 
-void loss_MSE(const TensorView &values/*[output_size, batch_size]*/, const TensorView &target_values/*[output_size, batch_size]*/,
-              TensorView loss/*[batch_size]*/, TensorView dLoss_dValues/*[output_size, batch_size]*/)
+float loss_MSE(const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues)
 {
   int len = values.size(0);
-  int batches = values.size(1);
-  assert(len == 1);
-
-  if (len == 1)
+  float loss = 0;
+  if (dLoss_dValues.Dim > 0)
   {
-    for (int i=0;i<batches;i++)
+    for (int i=0;i<len;i++)
     {
-      float l = values.get(0, i) - target_values.get(0, i);
-      loss.get(i) = l*l;
-      if (dLoss_dValues.Dim > 0)
-        dLoss_dValues.get(0, i) = 2*l;
+      float l = values.get(i) - target_values.get(i);
+      loss += l*l;
+      dLoss_dValues.get(i) = 2*l;
     }
   }
+  else
+  {
+    for (int i=0;i<len;i++)
+    {
+      float l = values.get(i) - target_values.get(i);
+      loss += l*l;
+    }   
+  }
+  return loss;
 }
 
 class NeuralNetwork
@@ -632,7 +636,7 @@ public:
     MSE
   };
 
-  using LossFunction = std::function<void(const TensorView &, const TensorView &, TensorView, TensorView)>;
+  using LossFunction = std::function<float(const TensorView &, const TensorView &, TensorView)>;
 
   void add_layer(std::shared_ptr<Layer> layer);
   bool check_validity();
@@ -640,15 +644,20 @@ public:
   void print_info();
   void train(const TensorView &inputs/*[input_size, count]*/, const TensorView &outputs/*[output_size, count]*/,
              const TensorView &inputs_val, const TensorView &outputs_val,
-             int batch_size, int epochs, Opt optimizer, Loss loss, float lr = 0.1f);
+             int batch_size, int iterations, Opt optimizer, Loss loss, float lr = 0.1f);
   void evaluate(const TensorView &input, TensorView output);
+  float test(const TensorView &input, const TensorView &target_output, Loss loss);
+  float calculate_loss(Loss loss, const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues);
   NeuralNetwork() {};
   NeuralNetwork(const NeuralNetwork &other) = delete;
   NeuralNetwork &operator=(const NeuralNetwork &other) = delete;
 private:
   std::vector<std::shared_ptr<Layer>> layers;
+
   std::vector<float> weights;
   std::vector<float> tmp_mem;
+
+  std::vector<TensorView> layer_outputs;
 };
 
   void NeuralNetwork::add_layer(std::shared_ptr<Layer> layer)
@@ -699,24 +708,31 @@ private:
 
     int total_params = 0;
     int layers_tmp_size = 1;
+    int network_tmp_size = 1;
     for (int i=0;i<layers.size();i++)
     {
       total_params += layers[i]->parameters_memory_size();
       layers_tmp_size = std::max(layers_tmp_size, layers[i]->tmp_memory_size());
+      network_tmp_size = std::max(network_tmp_size, (int)get_total_size(layers[i]->output_shape));
     }
 
     if (init_weights)
       weights = std::vector<float>(init_weights, init_weights+total_params);
     else
       weights = std::vector<float>(total_params, 0);
-    tmp_mem = std::vector<float>(layers_tmp_size, 0);
+    tmp_mem = std::vector<float>(layers_tmp_size + 2*network_tmp_size, 0);
 
     //init layer for evaluation (null-pointing tensors for gradients)
     float *cur_param_ptr = weights.data();
+    int li = 0;
+    layer_outputs.clear();
     for (auto &l : layers)
     {
       l->init(cur_param_ptr, nullptr, tmp_mem.data());
       cur_param_ptr += l->parameters_memory_size();
+
+      layer_outputs.push_back(TensorView(tmp_mem.data() + layers_tmp_size + li*network_tmp_size, l->output_shape));
+      li = (li+1)%2;
     }
 
     printf("Neural Network succesfully created\n");
@@ -730,7 +746,7 @@ private:
 
   void NeuralNetwork::train(const TensorView &inputs/*[input_size, count]*/, const TensorView &outputs/*[output_size, count]*/,
                             const TensorView &inputs_val, const TensorView &outputs_val,
-             int batch_size, int epochs, Opt opt, Loss loss, float lr)
+                            int batch_size, int iterations, Opt opt, Loss loss_func, float lr)
   {
     //check if the input is correct
     assert(inputs.Dim == 2);
@@ -738,26 +754,9 @@ private:
     assert(outputs.Dim == 2);
     assert(compact_dims(outputs.scheme) == 2);
     assert(inputs.size(1) == outputs.size(1));
-    assert(batch_size > 0 && batch_size <= inputs.size(1));
 
-    //calculate memory requirements
-    int io_size = 0;
-    int network_tmp_size = get_total_size(layers[0]->input_shape);
-    for (auto &l : layers)
-    {
-      io_size += batch_size*get_total_size(l->output_shape);
-      network_tmp_size = std::max(network_tmp_size, (int)get_total_size(l->output_shape));
-    }
-    network_tmp_size *= batch_size;
-
-    //check if the network is correct
+    //initialize network
     initialize();
-    
-    //allocate memory needed for training
-    std::vector<float> gradients(weights.size(), 0);
-    std::array<std::vector<float>, 2> network_tmp_mem = {std::vector<float>(network_tmp_size, 0), std::vector<float>(network_tmp_size, 0)};
-    std::vector<float> loss_tmp_mem(batch_size, 0);
-    std::vector<float> io_mem(io_size, 0);
 
     //initialize weights. Uniform in [-1, 1]
     for (auto &w : weights)
@@ -770,26 +769,23 @@ private:
     else if (opt == Opt::Adam)
       optimizer.reset(new OptimizerAdam(weights.size(), lr));
     
-    //initialize loss function
-    LossFunction loss_function;
-    if (loss == Loss::MSE)
-      loss_function = loss_MSE;
-    
+    //calculate memory requirements for training
+    int io_size = 0;
+    for (auto &l : layers)
+      io_size += get_total_size(l->output_shape);
+
+    //allocate memory needed for training
+    std::vector<float> gradients(weights.size(), 0);
+    std::vector<float> io_mem(io_size, 0);
+
     //create tensors to store layers' outputs
-    TensorView loss_batch(loss_tmp_mem.data(), Shape{(IndexType)batch_size});
-    std::vector<TensorView> layer_outputs;
-    std::vector<TensorView> layer_dLoss_dOutputs;
+    std::vector<TensorView> layer_dLoss_dOutputs = layer_outputs;
+    std::vector<TensorView> layer_saved_outputs;
     float *cur_io_ptr = io_mem.data();
-    int li = 0;
     for (auto &l : layers)
     {
-      Shape shape = l->output_shape;
-      shape.push_back(batch_size);
-      layer_outputs.push_back(TensorView(cur_io_ptr, shape));
-      cur_io_ptr += get_total_size(shape);
-
-      layer_dLoss_dOutputs.push_back(TensorView(network_tmp_mem[li].data(), shape));
-      li = (li+1)%2;
+      layer_saved_outputs.push_back(TensorView(cur_io_ptr, l->output_shape));
+      cur_io_ptr += get_total_size(l->output_shape);
     }
 
     //init layer for training
@@ -802,111 +798,88 @@ private:
       cur_grad_ptr += l->parameters_memory_size();
     }
 
-    //start main training loop
+    //main training loop
     int count = inputs.size(inputs.Dim-1);
-    int batches = count/batch_size;
-    int iterations = epochs*batches;
 
     for (int iter=0;iter<iterations;iter++)
     {
-      int batch_id = rand()%batches;
-      //batch_id = 0;
-      TensorView input_batch = slice(inputs, {batch_id*batch_size, (batch_id+1)*batch_size});
-      TensorView target_output_batch = slice(outputs, {batch_id*batch_size, (batch_id+1)*batch_size});
-      TensorView cur_input = input_batch;
+      float loss = 0;
+      std::fill_n(gradients.data(), gradients.size(), 0);
 
-      //forward pass
-      layers[0]->forward(input_batch, layer_outputs[0]);
-      for (int i=1;i<layers.size();i++)
+      for (int batch_id = 0; batch_id<batch_size; batch_id++)
       {
-        layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
+        int sample_id = rand()%count;
+        TensorView input_batch = slice(inputs, sample_id);
+        TensorView target_output_batch = slice(outputs, sample_id);
+
+        //forward pass
+        layers[0]->forward(input_batch, layer_saved_outputs[0]);
+        for (int i=1;i<layers.size();i++)
+          layers[i]->forward(layer_saved_outputs[i-1], layer_saved_outputs[i]);
+
+        loss += calculate_loss(loss_func, layer_saved_outputs.back(), target_output_batch, layer_dLoss_dOutputs.back());
+
+        //backward pass
+        for (int i=layers.size()-1;i>=1;i--)
+          layers[i]->backward(layer_saved_outputs[i-1], layer_saved_outputs[i], layer_dLoss_dOutputs[i], layer_dLoss_dOutputs[i-1], false);
+        layers[0]->backward(input_batch, layer_saved_outputs[0], layer_dLoss_dOutputs[0], TensorView(), true);
       }
 
-      loss_function(layer_outputs.back(), target_output_batch, loss_batch, layer_dLoss_dOutputs.back());
+      loss /= batch_size;
+      for (auto &g : gradients)
+        g /= batch_size;
+      optimizer->step(weights.data(), gradients.data());
 
-      //backward pass
-      for (int i=layers.size()-1;i>=1;i--)
-        layers[i]->backward(layer_outputs[i-1], layer_outputs[i], layer_dLoss_dOutputs[i], layer_dLoss_dOutputs[i-1], false);
-      layers[0]->backward(input_batch, layer_outputs[0], layer_dLoss_dOutputs[0], TensorView(), true);
-/*
-      printf("weights [ ");
-      for (auto &w: weights)
-        printf("%f ", w);
-      printf("]\n");
-      printf("grads [ ");
-      for (auto &w: gradients)
-        printf("%f ", w);
-      printf("]\n");
-
-
-      print(layer_outputs.back());
-      print(target_output_batch);
-      print(loss_batch);*/
-      if (iter%batches == 0)
+      if (iter%100 == 0)
       {
-        //print(loss_batch);
-        float average_loss = 0;
-        for (int i=0;i<batch_size;i++)
-          average_loss += loss_batch.get(i);
-        average_loss /= batch_size;
-        printf("epoch %d: average loss %f\n", iter/batches, average_loss);
+        printf("iteration %d/%d: average loss %f\n", iter, iterations, loss);
         evaluate(inputs_val, outputs_val);
       }
-      
-      optimizer->step(weights.data(), gradients.data());
     }
-          printf("weights [ ");
-      for (auto &w: weights)
-        printf("%f ", w);
-      printf("]\n");
+    
+    printf("weights [ ");
+    for (auto &w: weights)
+      printf("%f ", w);
+    printf("]\n");
   }
 
   void NeuralNetwork::evaluate(const TensorView &input, TensorView output)
+  {    
+    int elements = input.size(input.Dim-1);
+    for (int i=0;i<elements;i++)
+    {
+      //forward pass
+      layers[0]->forward(slice(input, i), layer_outputs[0]);
+      for (int i=1;i<layers.size();i++)
+        layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
+      copy(layer_outputs.back(), slice(output, i));
+    }
+  }
+
+  float NeuralNetwork::test(const TensorView &input, const TensorView &target_output, Loss loss_func)
   {
-    TensorView X = input;
-    TensorView y = output;
-    if (X.Dim == layers[0]->input_shape.size()) //no batches 
+    int elements = input.size(input.Dim-1);
+    float loss = 0;
+    for (int i=0;i<elements;i++)
     {
-      Shape X_batched = layers[0]->input_shape;
-      X_batched.push_back(1);
-      Shape y_batched = layers.back()->output_shape;
-      y_batched.push_back(1);
-      X = reshape(X, X_batched);
-      y = reshape(y, y_batched);
+      //forward pass
+      layers[0]->forward(slice(input, i), layer_outputs[0]);
+      for (int i=1;i<layers.size();i++)
+        layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
+
+      loss += calculate_loss(loss_func, layer_outputs.back(), slice(target_output, i), TensorView());
     }
-    
-    int batch_size = X.size(X.Dim-1);
-    std::vector<float> loss_tmp_mem(batch_size, 0);
-    TensorView loss_batch(loss_tmp_mem.data(), Shape{(IndexType)batch_size});
+    loss /= elements;
+    printf("Average validation loss %f\n", loss);
+    return loss;
+  }
 
-    int network_tmp_size = get_total_size(layers[0]->input_shape);
-    for (auto &l : layers)
-      network_tmp_size = std::max(network_tmp_size, (int)get_total_size(l->output_shape));
-    network_tmp_size *= batch_size;
-
-    //allocate memory needed for evaluating
-    std::array<std::vector<float>, 2> network_tmp_mem = {std::vector<float>(network_tmp_size, 0), std::vector<float>(network_tmp_size, 0)};
-    std::vector<TensorView> layer_outputs;
-    int li = 0;
-    for (auto &l : layers)
-    {
-      Shape shape = l->output_shape;
-      shape.push_back(batch_size);
-      layer_outputs.push_back(TensorView(network_tmp_mem[li].data(), shape));
-      li = (li+1)%2;
-    }
-    //forward pass
-    layers[0]->forward(X, layer_outputs[0]);
-    for (int i=1;i<layers.size();i++)
-      layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
-
-    loss_MSE(layer_outputs.back(), y, loss_batch, TensorView());
-
-    float average_loss = 0;
-    for (int i = 0; i < batch_size; i++)
-      average_loss += loss_batch.get(i);
-    average_loss /= batch_size;
-    printf("Average validation loss %f\n", average_loss);
+  float NeuralNetwork::calculate_loss(Loss loss, const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues)
+  {
+    if (loss == Loss::MSE)
+      return loss_MSE(values, target_values, dLoss_dValues);
+    else
+      return 0;
   }
 
   int main(int argc, char **argv)
@@ -946,8 +919,8 @@ private:
     */
 
     std::vector<float> X, y;
-    uint size = 50;
-    uint dim = 2;
+    uint size = 1000;
+    uint dim = 25;
 
     //y = 3*x + 1
     for (int i=0;i<size;i++)
@@ -956,14 +929,10 @@ private:
       for (int j=0;j<dim;j++)
       {
         float x0 = 2*((float)rand())/RAND_MAX - 1;
-        //X.push_back(x0);
+        X.push_back(x0);
         r += ((j%2) ? 0.5 : -0.5)*x0;
       }
-      float x0 = 2*((float)rand())/RAND_MAX - 1;
-      float x1 = 2*((float)rand())/RAND_MAX - 1;
-      X.push_back(x0);
-      X.push_back(x1);
-      y.push_back(sin(x0)*sin(x1));
+      y.push_back(r);
     }
 
     TensorView Xv(X.data(), Shape{dim, size});
@@ -983,10 +952,10 @@ private:
     TensorView y_test = slice(yv, {train_size+val_size, size});
 
     NeuralNetwork nn;
-    nn.add_layer(std::make_shared<DenseLayer>(dim, 32));
-    nn.add_layer(std::make_shared<DenseLayer>(32, 16));
+    nn.add_layer(std::make_shared<DenseLayer>(dim, 16));
+    //nn.add_layer(std::make_shared<DenseLayer>(32, 16));
     nn.add_layer(std::make_shared<DenseLayer>(16, 1));
-    nn.train(X_train, y_train, X_val, y_val, 10, 250, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::MSE, 0.01);
+    nn.train(X_train, y_train, X_val, y_val, 50, 3000, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::MSE, 0.01);
 
     return 0;
   }
