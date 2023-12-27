@@ -705,6 +705,28 @@ float loss_cross_entropy(const TensorView &values, const TensorView &target_valu
   return loss;
 }
 
+float score_MSE(const TensorView &values, const TensorView &target_values)
+{
+  return loss_MSE(values, target_values, TensorView());
+}
+
+float score_accuracy(const TensorView &values, const TensorView &target_values)
+{
+  // values are one-hot encoded;
+  int count = values.size(1);
+  int len = values.size(0);
+  int predicted_label = 0;
+  int true_label = 0;
+  for (int j = 0; j < len; j++)
+  {
+    if (values.get(j) > values.get(predicted_label))
+      predicted_label = j;
+    if (target_values.get(j) > target_values.get(true_label))
+      true_label = j;
+  }
+  return (predicted_label == true_label);
+}
+
 class NeuralNetwork
 {
 public:
@@ -730,7 +752,8 @@ public:
              int batch_size, int iterations, Opt optimizer, Loss loss, float lr = 0.1f);
   void evaluate(const TensorView &input, TensorView output);
   float test(const TensorView &input, const TensorView &target_output, Loss loss);
-  float calculate_loss(Loss loss, const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues);
+  float calculate_loss(Loss  loss, const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues);
+  float calculate_score(Loss loss, const TensorView &values, const TensorView &target_values);
   NeuralNetwork() {};
   NeuralNetwork(const NeuralNetwork &other) = delete;
   NeuralNetwork &operator=(const NeuralNetwork &other) = delete;
@@ -953,6 +976,7 @@ private:
   {
     int elements = input.size(input.Dim-1);
     float loss = 0;
+    float score = 0;
     for (int i=0;i<elements;i++)
     {
       //forward pass
@@ -961,9 +985,11 @@ private:
         layers[j]->forward(layer_outputs[j-1], layer_outputs[j]);
 
       loss += calculate_loss(loss_func, layer_outputs.back(), slice(target_output, i), TensorView());
+      score += calculate_score(loss_func, layer_outputs.back(), slice(target_output, i));
     }
     loss /= elements;
-    printf("Average validation loss %f\n", loss);
+    score /= elements;
+    printf("Validation loss %f score %f\n", loss, score);
     return loss;
   }
 
@@ -983,41 +1009,24 @@ private:
     }
   }
 
-  int main(int argc, char **argv)
+  float NeuralNetwork::calculate_score(Loss loss, const TensorView &values, const TensorView &target_values)
   {
-    /*
-    std::vector<float> values(1000*1000, 2.5);
-    TensorView tv(values.data(), Shape{1000, 1000});
-    //print(slice(tv, 0));
-    for (int i=0;i<1000;i++)
-    FOR_EACH_INPLACE(tv, [](float v) -> float { return 2*v;})
-    //print(slice(tv, 0));
-    return 0;
+    switch (loss)
+    {
+    case Loss::MSE:
+      return score_MSE(values, target_values);
+      break;
+    case Loss::CrossEntropy:
+      return score_accuracy(values, target_values);
+      break;
+    default:
+      return 0;
+      break;
+    }
+  }
 
-    std::vector<float> values = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-    TensorView tv1(values.data(), Shape{10});
-    TensorView tv2(values.data(), Shape{4, 4});
-    TensorView tv3(values.data(), Shape{2, 2, 4});
-    print(tv1);
-    print(tv2);
-    print(tv3);
-
-    float *data = new float[1000];
-    TensorView tmp(data, tv3.scheme);
-    transpose(tv3, tmp);
-    print(tmp);
-    print(slice(tmp, 2));
-    print(slice(slice(tmp, 2),1));
-    tmp = reshape(tmp, tv2.scheme);
-    print(tmp);
-    transpose(tv2, tmp);
-    print(tmp);
-
-    printf("2 3 %f 3 2 %f\n", tmp.get(2,3), tmp.get(3,2));
-
-    delete[] data;
-    */
-
+  void test_1_linear_regression()
+  {
     std::vector<float> X, y;
     uint size = 1000;
     uint dim = 25;
@@ -1052,10 +1061,60 @@ private:
     TensorView y_test = slice(yv, {train_size+val_size, size});
 
     NeuralNetwork nn;
-    nn.add_layer(std::make_shared<DenseLayer>(dim, 16));
-    //nn.add_layer(std::make_shared<DenseLayer>(32, 16));
-    nn.add_layer(std::make_shared<DenseLayer>(16, 1));
+    nn.add_layer(std::make_shared<DenseLayer>(dim, 1));
     nn.train(X_train, y_train, X_val, y_val, 50, 3000, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::MSE, 0.01);
+  }
+
+  void test_2_simple_classification()
+  {
+    std::vector<float> X, y;
+    uint size = 50000;
+    uint dim = 5;
+
+    //y = 3*x + 1
+    for (int i=0;i<size;i++)
+    {
+      float r = 1;
+      for (int j=0;j<dim;j++)
+      {
+        float x0 = 2*((float)rand())/RAND_MAX - 1;
+        X.push_back(x0);
+        r += x0;
+      }
+      y.push_back( sin(r) >= 0);
+      y.push_back( sin(r) < 0);
+    }
+
+    TensorView Xv(X.data(), Shape{dim, size});
+    TensorView yv(y.data(), Shape{2  , size});
+
+    IndexType train_size = 0.8*size;
+    IndexType val_size = 0.1*size;
+    IndexType test_size = size-train_size-val_size;
+
+    TensorView X_train = slice(Xv, {0, train_size});
+    TensorView y_train = slice(yv, {0, train_size});
+
+    TensorView X_val = slice(Xv, {train_size, train_size+val_size});
+    TensorView y_val = slice(yv, {train_size, train_size+val_size});
+
+    TensorView X_test = slice(Xv, {train_size+val_size, size});
+    TensorView y_test = slice(yv, {train_size+val_size, size});
+
+    NeuralNetwork nn;
+    nn.add_layer(std::make_shared<DenseLayer>(dim, 64));
+    nn.add_layer(std::make_shared<ReLULayer>());
+    nn.add_layer(std::make_shared<DenseLayer>(64, 64));
+    nn.add_layer(std::make_shared<ReLULayer>());
+    nn.add_layer(std::make_shared<DenseLayer>(64, 2));
+    nn.add_layer(std::make_shared<SoftMaxLayer>());
+    nn.train(X_train, y_train, X_val, y_val, 256, 10000, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::CrossEntropy, 0.01);
+  }
+
+  int main(int argc, char **argv)
+  {
+    test_1_linear_regression();
+    //test_2_simple_classification();
 
     return 0;
   }
