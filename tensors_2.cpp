@@ -108,11 +108,6 @@ namespace tp
       out.get(i) = Func(t.get(i));                    \
   }
 
-  void add(const TensorView &t, ValueType a, TensorView out) { FOR_EACH(t, out, a * ) }
-  void add(TensorView t, ValueType a) { add(t, a, t); }
-  void mul(const TensorView &t, ValueType a, TensorView out) { FOR_EACH(t, out, a + ) }
-  void mul(TensorView t, ValueType a) { mul(t, a, t); }
-
   #define FOR_EACH_INPLACE(t, Func) FOR_EACH(t, t, Func)
 
   //TODO: support non-compact tensors
@@ -320,6 +315,8 @@ namespace tp
     assert(t.total_size == out.total_size);
     assert(compact_dims(t.scheme) == t.Dim);
     assert(compact_dims(out.scheme) == out.Dim);
+
+    memcpy(out._data, t._data, sizeof(ValueType)*t.total_size);
   }
 
   // Multiplies tensor with Dim>=2 by a vertex
@@ -431,7 +428,7 @@ namespace tp
 
     for (IndexType i=0;i<v1.total_size;i++)
       for (IndexType j=0;j<v2.total_size;j++)
-        out.get(i*v1.total_size + j) = v1.get(i)*v2.get(j);
+        out.get(i*v2.total_size + j) = v1.get(i)*v2.get(j);
   }
 }
 using namespace tp;
@@ -502,6 +499,9 @@ void DenseLayer::backward(const TensorView &input, const TensorView &output,
   }
   
   //dLoss_dA += dLoss_dOutput ⊗ input
+  //print_scheme(dLoss_dOutput.Dim, dLoss_dOutput.scheme);printf("\n");
+  //print_scheme(input.Dim, input.scheme);printf("\n");
+  //print_scheme(op.Dim, op.scheme);printf("\n");
   vector_outer_product(dLoss_dOutput, input, op);
   add(dLoss_dA, op);
 
@@ -518,6 +518,89 @@ int DenseLayer::tmp_memory_size()
 {
   return input_shape[0]*output_shape[0];
 }
+
+class ReLULayer : public Layer
+{
+public:
+  ReLULayer() = default;
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem)
+  {
+
+  }
+
+  virtual void forward(const TensorView &input, TensorView &output) override
+  {
+    for (IndexType i=0;i<input.total_size;i++)
+      output.get(i) = (input.get(i) >= 0) ? input.get(i) : 0.0f;
+  }
+  virtual void backward(const TensorView &input, const TensorView &output, 
+                        const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer) override
+  {
+    for (IndexType i=0;i<input.total_size;i++)
+      dLoss_dInput.get(i) = (input.get(i) >= 0) ? dLoss_dOutput.get(i) : 0.0f;
+  }
+  virtual int parameters_memory_size() override
+  {
+    return 0;
+  }
+  virtual int tmp_memory_size() override
+  {
+    return 0;
+  }
+};
+
+class SoftMaxLayer : public Layer
+{
+public:
+  SoftMaxLayer() = default;
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem)
+  {
+
+  }
+
+  virtual void forward(const TensorView &input, TensorView &output) override
+  {
+    float mx = input.get(0);
+    for (IndexType i=0;i<input.total_size;i++)
+      mx = std::max(mx, input.get(i));
+    float sum = 0;
+    for (IndexType i=0;i<input.total_size;i++)
+    {
+      float ex = exp(input.get(i) - mx + 1e-15);
+      output.get(i) = ex;
+      sum += ex;
+    }
+    float mult = 1/sum;
+    for (IndexType i=0;i<input.total_size;i++)
+      output.get(i) *= mult;
+  }
+  virtual void backward(const TensorView &input, const TensorView &output, 
+                        const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer) override
+  {
+    //dLoss_dInput = dloss_dOutput * dOutput/dInput = (dOutput/dInput)^T * dloss_dOutput
+    //(dOutput/dInput)_ij =  output_i*(1-output_i)   if i==j
+    //                    =  -output_i*output_j      if i!=j
+    //dOutput/dInput)^T = dOutput/dInput
+    //
+    for (IndexType i=0;i<input.total_size;i++)
+    {
+      dLoss_dInput.get(i) = 0;
+      for (IndexType j=0;j<i;j++)
+        dLoss_dInput.get(i) += -output.get(i)*output.get(j)*dLoss_dOutput.get(j);
+      dLoss_dInput.get(i) += output.get(i)*(1-output.get(i))*dLoss_dOutput.get(i);
+      for (IndexType j=i+1;j<input.total_size;j++)
+        dLoss_dInput.get(i) += -output.get(i)*output.get(j)*dLoss_dOutput.get(j);
+    }
+  }
+  virtual int parameters_memory_size() override
+  {
+    return 0;
+  }
+  virtual int tmp_memory_size() override
+  {
+    return 0;
+  }
+};
 
 class Optimizer
 {
@@ -609,6 +692,19 @@ float loss_MSE(const TensorView &values, const TensorView &target_values, Tensor
   return loss;
 }
 
+float loss_cross_entropy(const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues)
+{
+  int len = values.size(0);
+  float loss = 0;
+  for (int i=0;i<len;i++)
+    loss += -target_values.get(i)*logf(values.get(i) + 1e-15f);
+  if (dLoss_dValues.Dim > 0)
+    for (int i=0;i<len;i++)
+      dLoss_dValues.get(i) = -target_values.get(i)/(values.get(i) + 1e-15f);
+  
+  return loss;
+}
+
 class NeuralNetwork
 {
 public:
@@ -619,7 +715,8 @@ public:
   };
   enum Loss
   {
-    MSE
+    MSE,
+    CrossEntropy
   };
 
   using LossFunction = std::function<float(const TensorView &, const TensorView &, TensorView)>;
@@ -655,6 +752,10 @@ private:
   {
     for (int i=1;i<layers.size();i++)
     {
+      //shape-insensitive layers
+      if (layers[i]->input_shape.empty() || layers[i-1]->output_shape.empty());
+        continue;
+
       if (layers[i]->input_shape.size() != layers[i-1]->output_shape.size())
       {
         printf("NeuralNetwork: layers %d and %d have incompatible shapes!\n", i-1, i);
@@ -712,12 +813,17 @@ private:
     float *cur_param_ptr = weights.data();
     int li = 0;
     layer_outputs.clear();
-    for (auto &l : layers)
+    for (int i=0;i<layers.size();i++)
     {
-      l->init(cur_param_ptr, nullptr, tmp_mem.data());
-      cur_param_ptr += l->parameters_memory_size();
+      if (i > 0 && layers[i]->input_shape.empty())
+      {
+        layers[i]->input_shape = layers[i-1]->output_shape;
+        layers[i]->output_shape = layers[i-1]->output_shape;
+      }
+      layers[i]->init(cur_param_ptr, nullptr, tmp_mem.data());
+      cur_param_ptr += layers[i]->parameters_memory_size();
 
-      layer_outputs.push_back(TensorView(tmp_mem.data() + layers_tmp_size + li*network_tmp_size, l->output_shape));
+      layer_outputs.push_back(TensorView(tmp_mem.data() + layers_tmp_size + li*network_tmp_size, layers[i]->output_shape));
       li = (li+1)%2;
     }
 
@@ -819,14 +925,15 @@ private:
       if (iter%100 == 0)
       {
         printf("iteration %d/%d: average loss %f\n", iter, iterations, loss);
-        evaluate(inputs_val, outputs_val);
+        test(inputs_val, outputs_val, loss_func);
+        //evaluate(inputs_val, outputs_val);
       }
     }
     
-    printf("weights [ ");
-    for (auto &w: weights)
-      printf("%f ", w);
-    printf("]\n");
+    //printf("weights [ ");
+    //for (auto &w: weights)
+    //  printf("%f ", w);
+    //printf("]\n");
   }
 
   void NeuralNetwork::evaluate(const TensorView &input, TensorView output)
@@ -836,8 +943,8 @@ private:
     {
       //forward pass
       layers[0]->forward(slice(input, i), layer_outputs[0]);
-      for (int i=1;i<layers.size();i++)
-        layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
+      for (int j=1;j<layers.size();j++)
+        layers[j]->forward(layer_outputs[j-1], layer_outputs[j]);
       copy(layer_outputs.back(), slice(output, i));
     }
   }
@@ -850,8 +957,8 @@ private:
     {
       //forward pass
       layers[0]->forward(slice(input, i), layer_outputs[0]);
-      for (int i=1;i<layers.size();i++)
-        layers[i]->forward(layer_outputs[i-1], layer_outputs[i]);
+      for (int j=1;j<layers.size();j++)
+        layers[j]->forward(layer_outputs[j-1], layer_outputs[j]);
 
       loss += calculate_loss(loss_func, layer_outputs.back(), slice(target_output, i), TensorView());
     }
@@ -862,10 +969,18 @@ private:
 
   float NeuralNetwork::calculate_loss(Loss loss, const TensorView &values, const TensorView &target_values, TensorView dLoss_dValues)
   {
-    if (loss == Loss::MSE)
+    switch (loss)
+    {
+    case Loss::MSE:
       return loss_MSE(values, target_values, dLoss_dValues);
-    else
+      break;
+    case Loss::CrossEntropy:
+      return loss_cross_entropy(values, target_values, dLoss_dValues);
+      break;
+    default:
       return 0;
+      break;
+    }
   }
 
   int main(int argc, char **argv)
