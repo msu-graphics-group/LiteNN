@@ -438,12 +438,26 @@ namespace tp
 }
 using namespace tp;
 
+void zero_initialization(TensorView t)
+{
+  fill(t, 0);
+}
+
+void he_initialization(TensorView t, int fan_in, int fan_out)
+{
+  float mn = -sqrt(6/fan_in);
+  float mx = sqrt(6/fan_out);
+  float d = mx-mn;
+  for (IndexType i=0;i<t.total_size;i++)
+    t.get(i) = d*(((float)rand())/RAND_MAX) + mn;
+}
+
 class Layer
 {
 public:
   tp::Shape input_shape, output_shape;
 
-  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem) = 0;
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights) = 0;
   virtual void forward(const TensorView &input, TensorView &output) = 0; 
   virtual void backward(const TensorView &input, const TensorView &output, 
                         const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer) = 0; 
@@ -456,7 +470,7 @@ class DenseLayer : public Layer
 public:
   DenseLayer() = default;
   DenseLayer(int input_size, int output_size);
-  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem) override;
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights) override;
   virtual void forward(const TensorView &input, TensorView &output) override; 
   virtual void backward(const TensorView &input, const TensorView &output, 
                         const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer) override; 
@@ -474,7 +488,7 @@ DenseLayer::DenseLayer(int input_size, int output_size)
   output_shape.push_back(output_size);
 }
 
-void DenseLayer::init(float *param_mem, float *gradient_mem, float *tmp_mem)
+void DenseLayer::init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights)
 {
   A = TensorView(param_mem + 0, Shape{input_shape[0], output_shape[0]});
   b = TensorView(param_mem + A.total_size, Shape{output_shape[0]});
@@ -484,6 +498,12 @@ void DenseLayer::init(float *param_mem, float *gradient_mem, float *tmp_mem)
 
   At = TensorView(tmp_mem + 0, Shape{output_shape[0], input_shape[0]});
   op = TensorView(tmp_mem + 0, Shape{input_shape[0], output_shape[0]});//never used together
+
+  if (initialize_random_weights)
+  {
+    he_initialization(A, input_shape[0], output_shape[0]);
+    zero_initialization(b);
+  }
 }
 
 void DenseLayer::forward(const TensorView &input, TensorView &output)
@@ -528,7 +548,7 @@ class ReLULayer : public Layer
 {
 public:
   ReLULayer() = default;
-  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem)
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights)
   {
 
   }
@@ -558,7 +578,7 @@ class SoftMaxLayer : public Layer
 {
 public:
   SoftMaxLayer() = default;
-  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem)
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights)
   {
 
   }
@@ -848,7 +868,7 @@ private:
         layers[i]->input_shape = layers[i-1]->output_shape;
         layers[i]->output_shape = layers[i-1]->output_shape;
       }
-      layers[i]->init(cur_param_ptr, nullptr, tmp_mem.data());
+      layers[i]->init(cur_param_ptr, nullptr, tmp_mem.data(), false);
       cur_param_ptr += layers[i]->parameters_memory_size();
 
       layer_outputs.push_back(TensorView(tmp_mem.data() + layers_tmp_size + li*network_tmp_size, layers[i]->output_shape));
@@ -877,10 +897,6 @@ private:
 
     //initialize network
     initialize();
-
-    //initialize weights. Uniform in [-1, 1]
-    for (auto &w : weights)
-      w = 2*(((float)rand())/RAND_MAX)-1;
 
     //initialize optimizer
     std::unique_ptr<Optimizer> optimizer;
@@ -913,7 +929,7 @@ private:
     float *cur_grad_ptr = gradients.data();
     for (auto &l : layers)
     {
-      l->init(cur_param_ptr, cur_grad_ptr, tmp_mem.data());
+      l->init(cur_param_ptr, cur_grad_ptr, tmp_mem.data(), true);
       cur_param_ptr += l->parameters_memory_size();
       cur_grad_ptr += l->parameters_memory_size();
     }
@@ -1154,12 +1170,12 @@ private:
 
   int main(int argc, char **argv)
   {
-    //test_1_linear_regression();
-    //test_2_simple_classification();
-    std::vector<float> data;
-    TensorView view = read_image_rgb("empty.png", data);
-    printf("%d %d %d %d\n", view.Dim, view.size(0), view.size(1), view.size(2));
-    write_image_rgb("test.png", view);
+    test_1_linear_regression();
+    test_2_simple_classification();
+    //std::vector<float> data;
+    //TensorView view = read_image_rgb("empty_64.png", data);
+    //printf("%d %d %d %d\n", view.Dim, view.size(0), view.size(1), view.size(2));
+    //write_image_rgb("test_64.png", view);
 
     return 0;
   }
