@@ -12,6 +12,11 @@
 #include <chrono>
 #include <cmath>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 namespace tp
 {
   using AxisIdType = uint8_t;
@@ -1025,6 +1030,42 @@ private:
     }
   }
 
+  void write_image_rgb(std::string path, const TensorView &image_tensor)
+  {
+    assert(image_tensor.Dim == 3);
+    assert(image_tensor.size(0) == 3);
+
+    unsigned char *data = new unsigned char[image_tensor.total_size];
+    for (int i=0;i<image_tensor.total_size;i++)
+    data[i] = std::max(0, std::min(255, (int)(255*image_tensor.get(i))));
+    
+    stbi_write_png(path.c_str(), image_tensor.size(1), image_tensor.size(2), 3, data, 3*image_tensor.size(1));
+
+    delete[] data;
+  }
+
+  TensorView read_image_rgb(std::string path, std::vector<float> &image_data)
+  {
+    int width, height, channels;
+    unsigned char *imgData = stbi_load(path.c_str(), &width, &height, &channels, 0);
+
+    image_data.resize(3*width*height, 0);
+    TensorView image_tensor(image_data.data(), Shape{3, (uint)width, (uint)height});
+    for (int i=0;i<height;i++)
+    {
+      for (int j=0;j<width;j++)
+      {
+        image_tensor.get(0, j, i) = imgData[channels*(i*width+j) + 0]/255.0f;
+        image_tensor.get(1, j, i) = imgData[channels*(i*width+j) + 1]/255.0f;
+        image_tensor.get(2, j, i) = imgData[channels*(i*width+j) + 2]/255.0f;
+      }
+    }
+
+    stbi_image_free(imgData);
+
+    return image_tensor;
+  }
+
   void test_1_linear_regression()
   {
     std::vector<float> X, y;
@@ -1113,8 +1154,12 @@ private:
 
   int main(int argc, char **argv)
   {
-    test_1_linear_regression();
+    //test_1_linear_regression();
     //test_2_simple_classification();
+    std::vector<float> data;
+    TensorView view = read_image_rgb("empty.png", data);
+    printf("%d %d %d %d\n", view.Dim, view.size(0), view.size(1), view.size(2));
+    write_image_rgb("test.png", view);
 
     return 0;
   }
