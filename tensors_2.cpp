@@ -452,6 +452,17 @@ void he_initialization(TensorView t, int fan_in, int fan_out)
     t.get(i) = d*(((float)rand())/RAND_MAX) + mn;
 }
 
+constexpr float omega_0 = 30;
+
+void SIREN_initialization(TensorView t, int fan_in, int fan_out)
+{
+  float mx = (fan_in == 2) ? 0.5 : (sqrt(6.0/fan_in)/omega_0);
+  float mn =  -mx;
+  float d = mx-mn;
+  for (IndexType i=0;i<t.total_size;i++)
+    t.get(i) = d*(((float)rand())/RAND_MAX) + mn;
+}
+
 class Layer
 {
 public:
@@ -501,8 +512,8 @@ void DenseLayer::init(float *param_mem, float *gradient_mem, float *tmp_mem, boo
 
   if (initialize_random_weights)
   {
-    he_initialization(A, input_shape[0], output_shape[0]);
-    zero_initialization(b);
+    SIREN_initialization(A, input_shape[0], output_shape[0]);
+    SIREN_initialization(b, input_shape[0], output_shape[0]);
   }
 }
 
@@ -616,6 +627,39 @@ public:
       for (IndexType j=i+1;j<input.total_size;j++)
         dLoss_dInput.get(i) += -output.get(i)*output.get(j)*dLoss_dOutput.get(j);
     }
+  }
+  virtual int parameters_memory_size() override
+  {
+    return 0;
+  }
+  virtual int tmp_memory_size() override
+  {
+    return 0;
+  }
+};
+
+class SinLayer : public Layer
+{
+public:
+  SinLayer() = default;
+  SinLayer(float _omega_0)
+  {
+  }
+  virtual void init(float *param_mem, float *gradient_mem, float *tmp_mem, bool initialize_random_weights)
+  {
+
+  }
+
+  virtual void forward(const TensorView &input, TensorView &output) override
+  {
+    for (IndexType i=0;i<input.total_size;i++)
+      output.get(i) = sinf(omega_0*input.get(i));
+  }
+  virtual void backward(const TensorView &input, const TensorView &output, 
+                        const TensorView &dLoss_dOutput, TensorView dLoss_dInput, bool first_layer) override
+  {
+    for (IndexType i=0;i<input.total_size;i++)
+      dLoss_dInput.get(i) = dLoss_dOutput.get(i)*omega_0*cosf(omega_0*input.get(i));
   }
   virtual int parameters_memory_size() override
   {
@@ -1168,10 +1212,76 @@ private:
     nn.train(X_train, y_train, X_val, y_val, 256, 10000, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::CrossEntropy, 0.01);
   }
 
+  void test_3_SIREN_image()
+  {
+    std::vector<float> image_data, pixel_data, image_data_grayscale;
+    TensorView view = read_image_rgb("1a.png", image_data);
+    IndexType pixel_count = view.size(1)*view.size(2);
+    pixel_data.resize(2*pixel_count, 0);
+    image_data_grayscale.resize(pixel_count, 0);
+    for (IndexType i=0;i<view.size(2);i++)
+    {
+      for (IndexType j=0;j<view.size(1);j++)
+      {
+        pixel_data[2*(i*view.size(1) + j) + 0] = 2*(float)j/view.size(1)-1;
+        pixel_data[2*(i*view.size(1) + j) + 1] = 2*(float)i/view.size(2)-1;
+        image_data_grayscale[i*view.size(1) + j] = 0.2126 * view.get(0,j,i)+ 0.7152 * view.get(1,j,i) + 0.0722 * view.get(2,j,i);
+        image_data_grayscale[i*view.size(1) + j] = 2*(image_data_grayscale[i*view.size(1) + j]) - 1;
+      }
+    }
+
+    TensorView Xv = TensorView(pixel_data.data(), Shape{2, pixel_count}); //pixel coordinates
+    TensorView yv = TensorView(image_data_grayscale.data(), Shape{1, pixel_count}); //list of pixels
+
+    IndexType size = pixel_count;
+    IndexType train_size = 0.8*size;
+    IndexType val_size = 0.05*size;
+    IndexType test_size = size-train_size-val_size;
+
+    TensorView X_train = slice(Xv, {0, train_size});
+    TensorView y_train = slice(yv, {0, train_size});
+
+    TensorView X_val = slice(Xv, {train_size, train_size+val_size});
+    TensorView y_val = slice(yv, {train_size, train_size+val_size});
+
+    TensorView X_test = slice(Xv, {train_size+val_size, size});
+    TensorView y_test = slice(yv, {train_size+val_size, size});
+
+    NeuralNetwork nn;
+    nn.add_layer(std::make_shared<DenseLayer>(2, 64));
+    nn.add_layer(std::make_shared<SinLayer>());
+    //nn.add_layer(std::make_shared<DenseLayer>(128, 128));
+    //nn.add_layer(std::make_shared<SinLayer>());
+    nn.add_layer(std::make_shared<DenseLayer>(64, 64));
+    nn.add_layer(std::make_shared<SinLayer>());
+    nn.add_layer(std::make_shared<DenseLayer>(64, 64));
+    nn.add_layer(std::make_shared<SinLayer>());
+    nn.add_layer(std::make_shared<DenseLayer>(64, 1));
+    //nn.add_layer(std::make_shared<SinLayer>());
+    nn.train(Xv, yv, X_val, y_val, 1000, 10000, NeuralNetwork::Opt::Adam, NeuralNetwork::Loss::MSE, 0.0001);
+
+    nn.evaluate(Xv, yv);
+    yv = reshape(yv, Shape{view.size(1), view.size(2)});
+    for (IndexType i=0;i<yv.total_size;i++)
+      yv.get(i) = 0.5*(yv.get(i)+1);
+    for (IndexType i=0;i<view.size(2);i++)
+    {
+      for (IndexType j=0;j<view.size(1);j++)
+      {
+        view.get(0,j,i) = yv.get(j,i);
+        view.get(1,j,i) = yv.get(j,i);
+        view.get(2,j,i) = yv.get(j,i);
+      }
+    }
+
+    write_image_rgb("res.png", view);
+  }
+
   int main(int argc, char **argv)
   {
-    test_1_linear_regression();
-    test_2_simple_classification();
+    //test_1_linear_regression();
+    //test_2_simple_classification();
+    test_3_SIREN_image();
     //std::vector<float> data;
     //TensorView view = read_image_rgb("empty_64.png", data);
     //printf("%d %d %d %d\n", view.Dim, view.size(0), view.size(1), view.size(2));
