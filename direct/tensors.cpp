@@ -5,7 +5,7 @@
 #include <string>
 #include <cstring>
 
-namespace nn
+namespace nnd
 {
   TensorView::TensorView(ValueType *data, const std::vector<IndexType> &sizes) : TensorView(data, get_scheme(sizes))
   {
@@ -56,7 +56,7 @@ namespace nn
 
   FullIndex linear_to_full_index(const TensorView &t, IndexType index)
   {
-    FullIndex full_index;
+    FullIndex full_index = {0,0,0,0};
     for (int i = 0; i < t.Dim; i++)
     {
       full_index[i] = index % t.scheme[i].size;
