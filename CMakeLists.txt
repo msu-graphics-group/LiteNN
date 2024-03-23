@@ -61,6 +61,7 @@ set(SRC
       siren.cpp
       nn_tests.cpp
       dataset.cpp
+      nn_tests_performance.cpp
       
       standalone_tests.cpp)  
 
