@@ -80,18 +80,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatecosDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -107,18 +109,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesinDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -134,18 +138,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateurandDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -161,25 +167,27 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createset_inputDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 2+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data_in
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for memory
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[2].binding            = 2;
   dsBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[2].descriptorCount    = 1;
-  dsBindings[2].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[2].stageFlags         = stageFlags;
   dsBindings[2].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -195,18 +203,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateequalDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -222,18 +232,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateminDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -249,18 +261,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatelogDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -276,18 +290,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createlogical_orDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -303,18 +319,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createnot_equalDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -330,18 +348,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesqrtDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -357,18 +377,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemaxDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -384,18 +406,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatepowDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -411,18 +435,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreategreaterDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -438,18 +464,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatedilateDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -465,18 +493,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createouter_productDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -492,18 +522,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatepadDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -519,18 +551,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatelessDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -546,18 +580,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_3D_diffDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -573,18 +609,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createless_equalDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -600,18 +638,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesumDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -627,18 +667,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatecopyDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -654,18 +696,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateosumDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -681,18 +725,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatenotDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -708,18 +754,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateexpDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -735,18 +783,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatefillDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -762,25 +812,27 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createget_outputDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 2+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data_out
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for memory
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[2].binding            = 2;
   dsBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[2].descriptorCount    = 1;
-  dsBindings[2].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[2].stageFlags         = stageFlags;
   dsBindings[2].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -796,18 +848,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createlogical_andDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -823,18 +877,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateflipDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -850,18 +906,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesubDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -877,18 +935,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateaddDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -904,18 +964,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemulDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -931,18 +993,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Creategreater_equalDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -958,18 +1022,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatedivDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -985,18 +1051,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateminimumDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1012,18 +1080,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_3DDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1039,18 +1109,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemaximumDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1066,18 +1138,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatetransposeDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1093,18 +1167,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Creatematmul_transposedDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1120,18 +1196,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_poolDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1147,18 +1225,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatewhereDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1174,18 +1254,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createsmax_diffDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1201,18 +1283,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createconv3dDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1228,18 +1312,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createconv2dDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
@@ -1255,18 +1341,20 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_diffDSLayout()
 {
   std::array<VkDescriptorSetLayoutBinding, 1+1> dsBindings;
 
+  const auto stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
   // binding for data
   dsBindings[0].binding            = 0;
   dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[0].descriptorCount    = 1;
-  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].stageFlags         = stageFlags;
   dsBindings[0].pImmutableSamplers = nullptr;
 
   // binding for POD members stored in m_classDataBuffer
   dsBindings[1].binding            = 1;
   dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   dsBindings[1].descriptorCount    = 1;
-  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
   
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};

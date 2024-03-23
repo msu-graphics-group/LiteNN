@@ -5,9 +5,30 @@
 #include <cassert>
 #include "vk_copy.h"
 #include "vk_context.h"
-
 #include "tensor_processor_impl_gpu.h"
 #include "include/TensorProcessorImpl_gpu_ubo.h"
+
+
+std::shared_ptr<TensorProcessorImpl> CreateTensorProcessorImpl_GPU(vk_utils::VulkanContext a_ctx, size_t a_maxThreadsGenerated) 
+{ 
+  auto pObj = std::make_shared<TensorProcessorImpl_GPU>(); 
+  pObj->SetVulkanContext(a_ctx);
+  pObj->InitVulkanObjects(a_ctx.device, a_ctx.physicalDevice, a_maxThreadsGenerated); 
+  return pObj;
+}
+
+void TensorProcessorImpl_GPU::InitVulkanObjects(VkDevice a_device, VkPhysicalDevice a_physicalDevice, size_t a_maxThreadsCount) 
+{
+  physicalDevice = a_physicalDevice;
+  device         = a_device;
+  m_allCreatedPipelineLayouts.reserve(256);
+  m_allCreatedPipelines.reserve(256);
+  InitHelpers();
+  InitBuffers(a_maxThreadsCount, true);
+  InitKernels(".spv");
+  AllocateAllDescriptorSets();
+
+}
 
 static uint32_t ComputeReductionAuxBufferElements(uint32_t whole_size, uint32_t wg_size)
 {
@@ -112,7 +133,6 @@ void TensorProcessorImpl_GPU::MakeComputePipelineOnly(const char* a_shaderPath, 
     vkDestroyShaderModule(device, shaderModule, VK_NULL_HANDLE);
 }
 
-
 TensorProcessorImpl_GPU::~TensorProcessorImpl_GPU()
 {
   for(size_t i=0;i<m_allCreatedPipelines.size();i++)
@@ -209,7 +229,7 @@ TensorProcessorImpl_GPU::~TensorProcessorImpl_GPU()
   vkDestroyDescriptorSetLayout(device, max_pool_diffDSLayout, nullptr);
   max_pool_diffDSLayout = VK_NULL_HANDLE;
   vkDestroyDescriptorPool(device, m_dsPool, NULL); m_dsPool = VK_NULL_HANDLE;
-
+  
  
   vkDestroyBuffer(device, m_classDataBuffer, nullptr);
 
@@ -839,7 +859,6 @@ void TensorProcessorImpl_GPU::AllocMemoryForMemberBuffersAndImages(const std::ve
     AllocAndBind(a_buffers);
 
 }
-
 
 VkPhysicalDeviceFeatures2 TensorProcessorImpl_GPU::ListRequiredDeviceFeatures(std::vector<const char*>& deviceExtensions)
 {
