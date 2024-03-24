@@ -995,7 +995,7 @@ void tp_test_1_tensor_processor()
     printf("TEST 8. CONV_2D NO PADDING\n");
     std::vector<float> X = {1,2,3,4,5,6,7,8,9};
     std::vector<float> w = {0,-1,0,0,0,0,0,1,0, 0,0,0,-1,0,1,0,0,0};
-    std::vector<float> r(1, 0.0f);
+    std::vector<float> r(2, 0.0f);
     std::vector<float> r_ref = {45, 15};
     NeuralNetwork nn2;
     nn2.add_layer(std::make_shared<Conv2DLayer>(3,3,1, 2), Initializer::GlorotNormal);
