@@ -1151,7 +1151,7 @@ void tp_test_1_tensor_processor()
   {
     printf("TEST 10. FULLY CONNECTED NN TRAINING ON MNIST DATASET\n");
     Dataset dataset;
-    read_MNIST_dataset(base_path + std::string("../../resources/MNIST-dataset"), &dataset);
+    read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
     train_test_split(&dataset, 0.1);
 
     NeuralNetwork nn2;
@@ -1587,7 +1587,7 @@ void tp_test_1_tensor_processor()
   {
     printf("TEST 15. DROPOUT\n");
     Dataset dataset;
-    read_MNIST_dataset(base_path + "../../resources/MNIST-dataset", &dataset);
+    read_MNIST_dataset(base_path + "resources/MNIST-dataset", &dataset);
     train_test_split(&dataset, 0.1);
 
     NeuralNetwork nn2;
