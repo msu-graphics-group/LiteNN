@@ -69,7 +69,7 @@ namespace nn
     assert(TensorProgram::cmd_properties.size() == TensorProgram::CMD_COUNT);
     for (int i=0;i<TensorProgram::cmd_properties.size();i++)
       assert(TensorProgram::cmd_properties[i].type == i);
-    if (!proc)
+    if (!proc || backend != proc->used_backend)
     {
       proc.reset(new TensorProcessor());
       proc->used_backend = backend;
@@ -88,7 +88,11 @@ namespace nn
 
   void TensorProcessor::set_program(const TensorProgram &_program)
   {
-    TensorProcessor::init();
+    if (!proc)
+      TensorProcessor::init("CPU");
+    else
+      TensorProcessor::init(proc->used_backend);
+    
     proc->program = _program;
     proc->pImpl->allocate_memory(proc->program.total_memory_req);
     proc->pImpl->CommitDeviceData();
