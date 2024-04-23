@@ -28,17 +28,18 @@ namespace nn
   {
     printf("TEST 1. MATRIX MULTIPLICATION BENCHMARK\n");
 
-    std::vector<unsigned> sizes = {1, 16, 64, 256, 1024, 2048};
+    std::vector<unsigned> sizes_A = {16, 64, 256, 1024, 2048};
+    std::vector<unsigned> sizes_B = {16, 64, 256, 1024, 2048};
 
-    std::vector<float> A(sizes.back()*sizes.back(), 0);
-    std::vector<float> B(sizes.back()*sizes.back(), 0);
-    std::vector<float> C(sizes.back()*sizes.back(), 0);
-    std::vector<float> C_ref(sizes.back()*sizes.back(), 0);
+    std::vector<float> A(sizes_A.back()*sizes_A.back(), 0);
+    std::vector<float> B(sizes_A.back()*sizes_B.back(), 0);
+    std::vector<float> C(sizes_B.back()*sizes_B.back(), 0);
+    std::vector<float> C_ref(sizes_B.back()*sizes_B.back(), 0);
     TensorCompiler tc;
 
-    for (unsigned size_A : sizes)
+    for (unsigned size_A : sizes_A)
     {
-      for (unsigned size_B : sizes)
+      for (unsigned size_B : sizes_B)
       {
         unsigned n_tries = size_A == 2048 ? 25 : (size_A == 1024 ? 50 : 500);
 
@@ -97,7 +98,8 @@ namespace nn
         {
           for (int j=0;j<size_B;j++)
           {
-            //printf("(%u %u) %f %f\n",i,j, C_ref[i*size_B + j], C[i*size_B + j]);
+            //if (i<1 && j<256)
+            //  printf("(%u %u) %.8f %.8f\n",i,j, C_ref[i*size_B + j], C[i*size_B + j]);
             double diff = abs(C_ref[i*size_B + j] - C[i*size_B + j]);
             sum_diff += diff;
             if (diff > max_diff)

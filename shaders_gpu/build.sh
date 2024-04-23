@@ -43,3 +43,4 @@ glslangValidator -V kernel1D_smax_diff.comp -o kernel1D_smax_diff.comp.spv -DGLS
 glslangValidator -V kernel3D_conv3d.comp -o kernel3D_conv3d.comp.spv -DGLSL -I.. -I/home/sammael/kernel_slicer/TINYSTL -I/home/sammael/kernel_slicer/apps/LiteMathAux -I/home/sammael/kernel_slicer/apps/LiteMath 
 glslangValidator -V kernel3D_conv2d.comp -o kernel3D_conv2d.comp.spv -DGLSL -I.. -I/home/sammael/kernel_slicer/TINYSTL -I/home/sammael/kernel_slicer/apps/LiteMathAux -I/home/sammael/kernel_slicer/apps/LiteMath 
 glslangValidator -V kernel3D_max_pool_diff.comp -o kernel3D_max_pool_diff.comp.spv -DGLSL -I.. -I/home/sammael/kernel_slicer/TINYSTL -I/home/sammael/kernel_slicer/apps/LiteMathAux -I/home/sammael/kernel_slicer/apps/LiteMath 
+glslangValidator -V z_matMulTranspose.comp -o z_matMulTranspose.comp.spv

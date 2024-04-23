@@ -7,6 +7,22 @@ std::vector<float> _stat_time_cmd_num;
 std::vector<float> _stat_time_cmd_id;
 int _stat_execution_times;
 
+//it is a special function that will be transformed by kernel slicer to a HW-accelerated matrix multiplication
+//with tensor cores
+void MatMulTranspose(float *dataA, uint32_t A_offset, float *dataB, uint32_t B_offset, float *dataC, uint32_t C_offset, uint32_t A_col_len, uint32_t B_col_len, uint32_t A_row_len)
+{
+  #pragma omp parallel for
+  for (int i = 0; i < A_col_len; i++)
+  {
+    for (unsigned j = 0; j < B_col_len; j++)
+    {
+      dataC[C_offset + i*B_col_len + j] = 0;
+      for (unsigned k = 0; k < A_row_len; k++)
+        dataC[C_offset + i*B_col_len + j] += dataA[A_offset + i*A_row_len + k]*dataB[B_offset + j*A_row_len + k];
+    }
+  }
+}
+
 void TensorProcessorImpl::process(const nn::TensorProgram &program)
 {
   unsigned data_size = memory.size();
@@ -122,7 +138,14 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       if (B.Dim == 2 && B.sizes[1] > maxWorkGroupSizeY)
         fprintf(stderr, "TensorProgram: MATMUL_T workgroup Y size (%u) exceeds limit. Program won't execute correctly!\n", B.sizes[1]);
       #endif
-      kernel2D_matmul_transposed(memory.data(), A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0], A, B, C);
+      if (B.Dim == 2 && 
+          A.sizes[0] % 8 == 0 && A.sizes[1] % 8 == 0 &&
+          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0)
+      {
+        MatMulTranspose(memory.data(), A.offset, memory.data(), B.offset, memory.data(), C.offset, A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0]);
+      }
+      else
+        kernel2D_matmul_transposed(memory.data(), A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0], A, B, C);
       break;
     case nn::TensorProgram::MOV:
       kernel1D_copy(memory.data(), A.total_size, 0, 0, A, C);

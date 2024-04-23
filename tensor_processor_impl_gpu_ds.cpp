@@ -16,13 +16,13 @@ void TensorProcessorImpl_GPU::AllocateAllDescriptorSets()
   //
   VkDescriptorPoolSize buffersSize, combinedImageSamSize, imageStorageSize;
   buffersSize.type                     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  buffersSize.descriptorCount          = 25 + 64; // + 64 for reserve
+  buffersSize.descriptorCount          = 28 + 64; // + 64 for reserve
 
   std::vector<VkDescriptorPoolSize> poolSizes = {buffersSize};
 
   combinedImageSamSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   combinedImageSamSize.descriptorCount = 0*GetDefaultMaxTextures() + 0;
-  
+
   imageStorageSize.type                = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
   imageStorageSize.descriptorCount     = 0;
 
@@ -33,43 +33,44 @@ void TensorProcessorImpl_GPU::AllocateAllDescriptorSets()
 
   VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
   descriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descriptorPoolCreateInfo.maxSets       = 23 + 2; // add 1 to prevent zero case and one more for internal needs
+  descriptorPoolCreateInfo.maxSets       = 24 + 2; // add 1 to prevent zero case and one more for internal needs
   descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
   descriptorPoolCreateInfo.pPoolSizes    = poolSizes.data();
-  
+
   VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, NULL, &m_dsPool));
-  
+
   // allocate all descriptor sets
   //
-  VkDescriptorSetLayout layouts[23] = {};
+  VkDescriptorSetLayout layouts[24] = {};
   layouts[0] = get_outputDSLayout;
   layouts[1] = set_inputDSLayout;
   layouts[2] = addDSLayout;
   layouts[3] = expDSLayout;
   layouts[4] = sumDSLayout;
-  layouts[5] = matmul_transposedDSLayout;
-  layouts[6] = copyDSLayout;
-  layouts[7] = fillDSLayout;
-  layouts[8] = copyDSLayout;
-  layouts[9] = transposeDSLayout;
-  layouts[10] = outer_productDSLayout;
-  layouts[11] = smax_diffDSLayout;
-  layouts[12] = padDSLayout;
-  layouts[13] = conv2dDSLayout;
-  layouts[14] = flipDSLayout;
-  layouts[15] = max_poolDSLayout;
-  layouts[16] = max_pool_diffDSLayout;
-  layouts[17] = fillDSLayout;
-  layouts[18] = dilateDSLayout;
-  layouts[19] = urandDSLayout;
-  layouts[20] = conv3dDSLayout;
-  layouts[21] = max_pool_3DDSLayout;
-  layouts[22] = max_pool_3D_diffDSLayout;
+  layouts[5] = matMulTransposeDSLayout;
+  layouts[6] = matmul_transposedDSLayout;
+  layouts[7] = copyDSLayout;
+  layouts[8] = fillDSLayout;
+  layouts[9] = copyDSLayout;
+  layouts[10] = transposeDSLayout;
+  layouts[11] = outer_productDSLayout;
+  layouts[12] = smax_diffDSLayout;
+  layouts[13] = padDSLayout;
+  layouts[14] = conv2dDSLayout;
+  layouts[15] = flipDSLayout;
+  layouts[16] = max_poolDSLayout;
+  layouts[17] = max_pool_diffDSLayout;
+  layouts[18] = fillDSLayout;
+  layouts[19] = dilateDSLayout;
+  layouts[20] = urandDSLayout;
+  layouts[21] = conv3dDSLayout;
+  layouts[22] = max_pool_3DDSLayout;
+  layouts[23] = max_pool_3D_diffDSLayout;
 
   VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
   descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  descriptorSetAllocateInfo.descriptorPool     = m_dsPool;  
-  descriptorSetAllocateInfo.descriptorSetCount = 23;     
+  descriptorSetAllocateInfo.descriptorPool     = m_dsPool;
+  descriptorSetAllocateInfo.descriptorSetCount = 24;
   descriptorSetAllocateInfo.pSetLayouts        = layouts;
 
   auto tmpRes = vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, m_allGeneratedDS);
@@ -95,12 +96,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatecosDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -124,12 +125,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesinDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -153,12 +154,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateurandDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -189,12 +190,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createset_inputDSLayout()
   dsBindings[2].descriptorCount    = 1;
   dsBindings[2].stageFlags         = stageFlags;
   dsBindings[2].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -218,12 +219,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateequalDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -247,12 +248,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateminDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -276,12 +277,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatelogDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -305,12 +306,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createlogical_orDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -334,12 +335,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createnot_equalDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -363,12 +364,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesqrtDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -392,12 +393,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemaxDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -421,12 +422,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatepowDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -450,12 +451,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreategreaterDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -479,12 +480,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatedilateDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -508,12 +509,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createouter_productDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -537,12 +538,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatepadDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -566,12 +567,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatelessDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -595,12 +596,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_3D_diffDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -624,12 +625,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createless_equalDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -653,12 +654,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesumDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -682,12 +683,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatecopyDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -711,12 +712,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateosumDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -740,12 +741,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatenotDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -769,12 +770,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateexpDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -798,12 +799,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatefillDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -834,12 +835,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createget_outputDSLayout()
   dsBindings[2].descriptorCount    = 1;
   dsBindings[2].stageFlags         = stageFlags;
   dsBindings[2].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -863,12 +864,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createlogical_andDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -892,12 +893,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateflipDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -921,12 +922,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatesubDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -950,12 +951,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateaddDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -979,12 +980,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemulDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1008,12 +1009,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Creategreater_equalDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1037,12 +1038,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatedivDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1066,12 +1067,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreateminimumDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1095,12 +1096,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_3DDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1124,12 +1125,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatemaximumDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1153,12 +1154,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatetransposeDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1182,12 +1183,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Creatematmul_transposedDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1211,12 +1212,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_poolDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1240,12 +1241,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatewhereDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1269,12 +1270,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createsmax_diffDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1298,12 +1299,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createconv3dDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1327,12 +1328,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createconv2dDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1356,12 +1357,12 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::Createmax_pool_diffDSLayout()
   dsBindings[1].descriptorCount    = 1;
   dsBindings[1].stageFlags         = stageFlags;
   dsBindings[1].pImmutableSamplers = nullptr;
-  
+
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
   descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   descriptorSetLayoutCreateInfo.bindingCount = uint32_t(dsBindings.size());
   descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
-  
+
   VkDescriptorSetLayout layout = nullptr;
   VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
   return layout;
@@ -1393,6 +1394,38 @@ VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatecopyKernelFloatDSLayout()
   return layout;
 }
 
+VkDescriptorSetLayout TensorProcessorImpl_GPU::CreatematMulTransposeDSLayout()
+{
+  std::array<VkDescriptorSetLayoutBinding, 3> dsBindings;
+
+  dsBindings[0].binding            = 0;
+  dsBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  dsBindings[0].descriptorCount    = 1;
+  dsBindings[0].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[0].pImmutableSamplers = nullptr;
+
+  dsBindings[1].binding            = 1;
+  dsBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  dsBindings[1].descriptorCount    = 1;
+  dsBindings[1].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[1].pImmutableSamplers = nullptr;
+
+  dsBindings[2].binding            = 2;
+  dsBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  dsBindings[2].descriptorCount    = 1;
+  dsBindings[2].stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
+  dsBindings[2].pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
+  descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  descriptorSetLayoutCreateInfo.bindingCount = dsBindings.size();
+  descriptorSetLayoutCreateInfo.pBindings    = dsBindings.data();
+
+  VkDescriptorSetLayout layout = nullptr;
+  VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, NULL, &layout));
+  return layout;
+}
+
 void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_get_output()
 {
   // now create actual bindings
@@ -1408,7 +1441,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_get_output()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = get_output_local.outBuffer;
     descriptorBufferInfo[0].offset = get_output_local.outOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[0];
@@ -1417,12 +1450,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_get_output()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[1].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[1].dstSet           = m_allGeneratedDS[0];
@@ -1431,12 +1464,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_get_output()
     writeDescriptorSet[1].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[1].pBufferInfo      = &descriptorBufferInfo[1];
     writeDescriptorSet[1].pImageInfo       = nullptr;
-    writeDescriptorSet[1].pTexelBufferView = nullptr; 
+    writeDescriptorSet[1].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[2]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[2].buffer = m_classDataBuffer;
     descriptorBufferInfo[2].offset = 0;
-    descriptorBufferInfo[2].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[2].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[2]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[2].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1467,7 +1500,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_set_input()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = set_input_local.inBuffer;
     descriptorBufferInfo[0].offset = set_input_local.inOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[1];
@@ -1476,12 +1509,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_set_input()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[1].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[1].dstSet           = m_allGeneratedDS[1];
@@ -1490,12 +1523,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_set_input()
     writeDescriptorSet[1].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[1].pBufferInfo      = &descriptorBufferInfo[1];
     writeDescriptorSet[1].pImageInfo       = nullptr;
-    writeDescriptorSet[1].pTexelBufferView = nullptr; 
+    writeDescriptorSet[1].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[2]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[2].buffer = m_classDataBuffer;
     descriptorBufferInfo[2].offset = 0;
-    descriptorBufferInfo[2].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[2].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[2]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[2].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1526,7 +1559,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[2];
@@ -1535,12 +1568,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1565,7 +1598,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[3];
@@ -1574,12 +1607,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1604,7 +1637,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[4];
@@ -1613,12 +1646,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1632,18 +1665,18 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #5: matmul_transposedCmd (["memory.data()"])
+  // descriptor set #5: matMulTransposeCmd (["memory.data()","memory.data()","memory.data()"])
   {
-    constexpr uint additionalSize = 1;
+    constexpr uint additionalSize = 0;
 
-    std::array<VkDescriptorBufferInfo, 1 + additionalSize> descriptorBufferInfo;
-    std::array<VkDescriptorImageInfo,  1 + additionalSize> descriptorImageInfo;
-    std::array<VkWriteDescriptorSet,   1 + additionalSize> writeDescriptorSet;
+    std::array<VkDescriptorBufferInfo, 3 + additionalSize> descriptorBufferInfo;
+    std::array<VkDescriptorImageInfo,  3 + additionalSize> descriptorImageInfo;
+    std::array<VkWriteDescriptorSet,   3 + additionalSize> writeDescriptorSet;
 
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[5];
@@ -1652,13 +1685,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
-    descriptorBufferInfo[1].buffer = m_classDataBuffer;
-    descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
-
+    descriptorBufferInfo[1].buffer = m_vdata.memoryBuffer;
+    descriptorBufferInfo[1].offset = m_vdata.memoryOffset;
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[1].dstSet           = m_allGeneratedDS[5];
@@ -1669,9 +1701,23 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[1].pImageInfo       = nullptr;
     writeDescriptorSet[1].pTexelBufferView = nullptr;
 
+    descriptorBufferInfo[2]        = VkDescriptorBufferInfo{};
+    descriptorBufferInfo[2].buffer = m_vdata.memoryBuffer;
+    descriptorBufferInfo[2].offset = m_vdata.memoryOffset;
+    descriptorBufferInfo[2].range  = VK_WHOLE_SIZE;
+    writeDescriptorSet[2]                  = VkWriteDescriptorSet{};
+    writeDescriptorSet[2].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet[2].dstSet           = m_allGeneratedDS[5];
+    writeDescriptorSet[2].dstBinding       = 2;
+    writeDescriptorSet[2].descriptorCount  = 1;
+    writeDescriptorSet[2].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    writeDescriptorSet[2].pBufferInfo      = &descriptorBufferInfo[2];
+    writeDescriptorSet[2].pImageInfo       = nullptr;
+    writeDescriptorSet[2].pTexelBufferView = nullptr;
+
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #6: copyCmd (["memory.data()"])
+  // descriptor set #6: matmul_transposedCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1682,7 +1728,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[6];
@@ -1691,12 +1737,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1710,7 +1756,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #7: fillCmd (["memory.data()"])
+  // descriptor set #7: copyCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1721,7 +1767,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[7];
@@ -1730,12 +1776,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1749,7 +1795,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #8: copyCmd (["memory.data()"])
+  // descriptor set #8: fillCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1760,7 +1806,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[8];
@@ -1769,12 +1815,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1788,7 +1834,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #9: transposeCmd (["memory.data()"])
+  // descriptor set #9: copyCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1799,7 +1845,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[9];
@@ -1808,12 +1854,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1827,7 +1873,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #10: outer_productCmd (["memory.data()"])
+  // descriptor set #10: transposeCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1838,7 +1884,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[10];
@@ -1847,12 +1893,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1866,7 +1912,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #11: smax_diffCmd (["memory.data()"])
+  // descriptor set #11: outer_productCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1877,7 +1923,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[11];
@@ -1886,12 +1932,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1905,7 +1951,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #12: padCmd (["memory.data()"])
+  // descriptor set #12: smax_diffCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1916,7 +1962,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[12];
@@ -1925,12 +1971,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1944,7 +1990,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #13: conv2dCmd (["memory.data()"])
+  // descriptor set #13: padCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1955,7 +2001,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[13];
@@ -1964,12 +2010,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1983,7 +2029,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #14: flipCmd (["memory.data()"])
+  // descriptor set #14: conv2dCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -1994,7 +2040,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[14];
@@ -2003,12 +2049,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2022,7 +2068,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #15: max_poolCmd (["memory.data()"])
+  // descriptor set #15: flipCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2033,7 +2079,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[15];
@@ -2042,12 +2088,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2061,7 +2107,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #16: max_pool_diffCmd (["memory.data()"])
+  // descriptor set #16: max_poolCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2072,7 +2118,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[16];
@@ -2081,12 +2127,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2100,7 +2146,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #17: fillCmd (["memory.data()"])
+  // descriptor set #17: max_pool_diffCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2111,7 +2157,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[17];
@@ -2120,12 +2166,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2139,7 +2185,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #18: dilateCmd (["memory.data()"])
+  // descriptor set #18: fillCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2150,7 +2196,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[18];
@@ -2159,12 +2205,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2178,7 +2224,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #19: urandCmd (["memory.data()"])
+  // descriptor set #19: dilateCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2189,7 +2235,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[19];
@@ -2198,12 +2244,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2217,7 +2263,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #20: conv3dCmd (["memory.data()"])
+  // descriptor set #20: urandCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2228,7 +2274,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[20];
@@ -2237,12 +2283,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2256,7 +2302,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #21: max_pool_3DCmd (["memory.data()"])
+  // descriptor set #21: conv3dCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2267,7 +2313,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[21];
@@ -2276,12 +2322,12 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2295,7 +2341,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
 
     vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
   }
-  // descriptor set #22: max_pool_3D_diffCmd (["memory.data()"])
+  // descriptor set #22: max_pool_3DCmd (["memory.data()"])
   {
     constexpr uint additionalSize = 1;
 
@@ -2306,7 +2352,7 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
     descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
-    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
     writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[0].dstSet           = m_allGeneratedDS[22];
@@ -2315,16 +2361,55 @@ void TensorProcessorImpl_GPU::InitAllGeneratedDescriptorSets_process()
     writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
     writeDescriptorSet[0].pImageInfo       = nullptr;
-    writeDescriptorSet[0].pTexelBufferView = nullptr; 
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
 
     descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
     descriptorBufferInfo[1].buffer = m_classDataBuffer;
     descriptorBufferInfo[1].offset = 0;
-    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;  
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
 
     writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
     writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet[1].dstSet           = m_allGeneratedDS[22];
+    writeDescriptorSet[1].dstBinding       = 1;
+    writeDescriptorSet[1].descriptorCount  = 1;
+    writeDescriptorSet[1].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    writeDescriptorSet[1].pBufferInfo      = &descriptorBufferInfo[1];
+    writeDescriptorSet[1].pImageInfo       = nullptr;
+    writeDescriptorSet[1].pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(device, uint32_t(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, NULL);
+  }
+  // descriptor set #23: max_pool_3D_diffCmd (["memory.data()"])
+  {
+    constexpr uint additionalSize = 1;
+
+    std::array<VkDescriptorBufferInfo, 1 + additionalSize> descriptorBufferInfo;
+    std::array<VkDescriptorImageInfo,  1 + additionalSize> descriptorImageInfo;
+    std::array<VkWriteDescriptorSet,   1 + additionalSize> writeDescriptorSet;
+
+    descriptorBufferInfo[0]        = VkDescriptorBufferInfo{};
+    descriptorBufferInfo[0].buffer = m_vdata.memoryBuffer;
+    descriptorBufferInfo[0].offset = m_vdata.memoryOffset;
+    descriptorBufferInfo[0].range  = VK_WHOLE_SIZE;
+    writeDescriptorSet[0]                  = VkWriteDescriptorSet{};
+    writeDescriptorSet[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet[0].dstSet           = m_allGeneratedDS[23];
+    writeDescriptorSet[0].dstBinding       = 0;
+    writeDescriptorSet[0].descriptorCount  = 1;
+    writeDescriptorSet[0].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    writeDescriptorSet[0].pBufferInfo      = &descriptorBufferInfo[0];
+    writeDescriptorSet[0].pImageInfo       = nullptr;
+    writeDescriptorSet[0].pTexelBufferView = nullptr;
+
+    descriptorBufferInfo[1]        = VkDescriptorBufferInfo{};
+    descriptorBufferInfo[1].buffer = m_classDataBuffer;
+    descriptorBufferInfo[1].offset = 0;
+    descriptorBufferInfo[1].range  = VK_WHOLE_SIZE;
+
+    writeDescriptorSet[1]                  = VkWriteDescriptorSet{};
+    writeDescriptorSet[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet[1].dstSet           = m_allGeneratedDS[23];
     writeDescriptorSet[1].dstBinding       = 1;
     writeDescriptorSet[1].descriptorCount  = 1;
     writeDescriptorSet[1].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
