@@ -1926,6 +1926,51 @@ void tp_test_1_tensor_processor()
     }
   }
 
+  void nn_test_19_torch_model()
+  {
+    printf("TEST 19. GETTING MODEL WEIGHTS FROM TORCH\n");
+    Dataset dataset;
+    read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
+    train_test_split(&dataset, 0.1);
+
+    NeuralNetwork nn2;
+    nn2.add_layer(std::make_shared<FlattenLayer>(28,28,1));
+    nn2.add_layer(std::make_shared<DenseLayer>(28*28*1, 512), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(512, 512), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(512, 10), Initializer::He);
+    //nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+    nn2.initialize_from_file(base_path + std::string("python_scripts/weights.bin"));
+
+    std::vector<float> y_res(dataset.train_labels.size(),0);
+    nn2.evaluate(dataset.train_data, y_res);
+    float acc = 0.0f;
+    float cnt = 0.0f;
+    for (int i=0;i<dataset.train_labels.size();i+=10)
+    {
+      int max_pos = 0;
+      int ref_max_pos = 0;
+      for (int j=0;j<10;j++)
+      {
+        if (y_res[i+j] > y_res[i+max_pos])
+          max_pos = j;
+        if (dataset.train_labels[i+j] > dataset.train_labels[i+ref_max_pos])
+          ref_max_pos = j;
+      }
+      printf("pred %d %d\n",max_pos, ref_max_pos);
+      acc += (max_pos == ref_max_pos);
+      cnt++;
+    }
+    float error_rate = 1 - acc/cnt;
+    printf(" 19.1. %-64s", "Error rate <5% ");
+    if (error_rate < 0.1f)
+      printf("passed\n");
+    else
+      printf("FAILED, error rate %f\n", error_rate);
+  }
+
   void perform_tests_tensor_processor(const std::vector<int> &test_ids)
   {
     srand(time(NULL));
