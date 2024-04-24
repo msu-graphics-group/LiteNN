@@ -1962,16 +1962,19 @@ void TensorProcessorImpl_GPU::processCmd(VkCommandBuffer a_commandBuffer, const 
       #endif
       if (B.Dim == 2 && 
           A.sizes[0] % 8 == 0 && A.sizes[1] % 8 == 0 &&
-          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0)
+          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0 &&
+          use_coop_mat_mul)
       {
         vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, matMulTransposeLayout, 0, 1, &m_allGeneratedDS[5], 0, nullptr);
   matMulTransposeCmd(A.offset, B.offset, C.offset, A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0]);
   vkCmdPipelineBarrier(m_currCmdBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
       }
       else
+      {
         vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, matmul_transposedLayout, 0, 1, &m_allGeneratedDS[6], 0, nullptr);
   matmul_transposedCmd(memory.data(), A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0], A, B, C);
   vkCmdPipelineBarrier(m_currCmdBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+      }
       break;
     case nn::TensorProgram::MOV:
       vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, copyLayout, 0, 1, &m_allGeneratedDS[7], 0, nullptr);

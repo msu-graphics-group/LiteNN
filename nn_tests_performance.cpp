@@ -37,90 +37,98 @@ namespace nn
     std::vector<float> C_ref(sizes_B.back()*sizes_B.back(), 0);
     TensorCompiler tc;
 
-    for (unsigned size_A : sizes_A)
+    for (int m_mode = 0; m_mode <= 1; m_mode++)
     {
-      for (unsigned size_B : sizes_B)
+      nn::TensorProcessor::RuntimeSettings settings;
+      settings.use_coop_mat_mul = m_mode;
+
+      TensorProcessor::set_runtime_settings(settings);
+      printf("\n Use cooperative matrices: %d\n", m_mode);
+      for (unsigned size_A : sizes_A)
       {
-        unsigned n_tries = size_A == 2048 ? 25 : (size_A == 1024 ? 50 : 500);
-
-        for (int i=0;i<size_A*size_A;i++)
-          A[i] = 2.0*rand()/RAND_MAX + 1.0;
-
-        for (int i=0;i<size_A*size_B;i++)
-          B[i] = 2.0*rand()/RAND_MAX + 1.0;
-        
-        for (int i=0;i<size_B;i++)
+        for (unsigned size_B : sizes_B)
         {
-          for (int j=0;j<size_A;j++)
+          unsigned n_tries = size_A == 2048 ? 25 : (size_A == 1024 ? 50 : 500);
+
+          for (int i=0;i<size_A*size_A;i++)
+            A[i] = 2.0*rand()/RAND_MAX + 1.0;
+
+          for (int i=0;i<size_A*size_B;i++)
+            B[i] = 2.0*rand()/RAND_MAX + 1.0;
+          
+          for (int i=0;i<size_B;i++)
           {
-            long double val = 0;
-            for (int k=0;k<size_A;k++)
-              val += (long double)A[j*size_A + k] * (long double)B[i*size_A + k];
-            C_ref[j*size_B + i] = val;
-          }
-        }
-
-    auto t_1 = std::chrono::steady_clock::now();
-        tc.start_program();
-        {
-          TensorToken A = TensorToken(size_A, size_A);
-          TensorToken B = TensorToken(size_A, size_B);
-          TensorToken C = TensorToken::mat_mul_t(A, B);
-
-          tc.input(A, "A");
-          tc.input(B, "B");
-          tc.output(C, "C");
-        }     
-        TensorProgram p = tc.finish_program();   
-        
-    auto t_2 = std::chrono::steady_clock::now();
-
-        TensorProcessor::set_program(p);
-        TensorProcessor::set_input("A", A.data(), A.size());
-        TensorProcessor::set_input("B", B.data(), B.size());
-
-    auto t_3 = std::chrono::steady_clock::now();
-
-        for (int i=0;i<n_tries;i++)
-          TensorProcessor::execute();
-
-    auto t_4 = std::chrono::steady_clock::now();
-
-        TensorProcessor::get_output("C", C.data(), C.size());
-    
-    auto t_5 = std::chrono::steady_clock::now();
-
-        long double sum_diff = 0;
-        double max_diff = 0;
-        unsigned max_diff_i=0, max_diff_j=0;
-
-        for (int i=0;i<size_A;i++)
-        {
-          for (int j=0;j<size_B;j++)
-          {
-            //if (i<1 && j<256)
-            //  printf("(%u %u) %.8f %.8f\n",i,j, C_ref[i*size_B + j], C[i*size_B + j]);
-            double diff = abs(C_ref[i*size_B + j] - C[i*size_B + j]);
-            sum_diff += diff;
-            if (diff > max_diff)
+            for (int j=0;j<size_A;j++)
             {
-              max_diff = diff;
-              max_diff_i = i;
-              max_diff_j = j;
+              long double val = 0;
+              for (int k=0;k<size_A;k++)
+                val += (long double)A[j*size_A + k] * (long double)B[i*size_A + k];
+              C_ref[j*size_B + i] = val;
             }
           }
-        }
 
-        
-        float t_compile = 0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_2 - t_1).count();
-        float t_input =   0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_3 - t_2).count();
-        float t_execute = 0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
-        float t_output =  0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_5 - t_4).count();
+      auto t_1 = std::chrono::steady_clock::now();
+          tc.start_program();
+          {
+            TensorToken A = TensorToken(size_A, size_A);
+            TensorToken B = TensorToken(size_A, size_B);
+            TensorToken C = TensorToken::mat_mul_t(A, B);
 
-        printf("matmul (%4ux%4u)*(%4ux%4u): exec %7.2f ms, overhead %5.2f+%5.2f+%5.2f ms, av. diff %.2Le, max diff %.2le at (%u %u)\n", 
-               size_A, size_A, size_B, size_A, t_execute, t_compile, t_input, t_output,
-               sum_diff/(size_A*size_B), max_diff, max_diff_i, max_diff_j);
-      }      
+            tc.input(A, "A");
+            tc.input(B, "B");
+            tc.output(C, "C");
+          }     
+          TensorProgram p = tc.finish_program();   
+          
+      auto t_2 = std::chrono::steady_clock::now();
+
+          TensorProcessor::set_program(p);
+          TensorProcessor::set_input("A", A.data(), A.size());
+          TensorProcessor::set_input("B", B.data(), B.size());
+
+      auto t_3 = std::chrono::steady_clock::now();
+
+          for (int i=0;i<n_tries;i++)
+            TensorProcessor::execute();
+
+      auto t_4 = std::chrono::steady_clock::now();
+
+          TensorProcessor::get_output("C", C.data(), C.size());
+      
+      auto t_5 = std::chrono::steady_clock::now();
+
+          long double sum_diff = 0;
+          double max_diff = 0;
+          unsigned max_diff_i=0, max_diff_j=0;
+
+          for (int i=0;i<size_A;i++)
+          {
+            for (int j=0;j<size_B;j++)
+            {
+              //if (i<1 && j<256)
+              //  printf("(%u %u) %.8f %.8f\n",i,j, C_ref[i*size_B + j], C[i*size_B + j]);
+              double diff = abs(C_ref[i*size_B + j] - C[i*size_B + j]);
+              sum_diff += diff;
+              if (diff > max_diff)
+              {
+                max_diff = diff;
+                max_diff_i = i;
+                max_diff_j = j;
+              }
+            }
+          }
+
+          
+          float t_compile = 0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_2 - t_1).count();
+          float t_input =   0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_3 - t_2).count();
+          float t_execute = 0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
+          float t_output =  0.001/n_tries*std::chrono::duration_cast<std::chrono::microseconds>(t_5 - t_4).count();
+
+          printf("matmul (%4ux%4u)*(%4ux%4u): exec %7.2f ms, overhead %5.2f+%5.2f+%5.2f ms, av. diff %.2Le, max diff %.2le at (%u %u)\n", 
+                size_A, size_A, size_B, size_A, t_execute, t_compile, t_input, t_output,
+                sum_diff/(size_A*size_B), max_diff, max_diff_i, max_diff_j);
+        }      
+      }
     }
   }
 
@@ -192,7 +200,7 @@ auto t_4 = std::chrono::steady_clock::now();
         tests[i] = i+1;
     }
     
-    TensorProcessor::init("GPU");
+    TensorProcessor::init(TensorProcessor::Backend::GPU);
 
     for (int i=0;i<80;i++)
       printf("#");

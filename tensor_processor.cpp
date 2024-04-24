@@ -64,23 +64,33 @@ namespace nn
   };
 
   std::unique_ptr<TensorProcessor> proc;
-  void TensorProcessor::init(std::string backend)
+  void TensorProcessor::init(Backend _backend)
   {
     assert(TensorProgram::cmd_properties.size() == TensorProgram::CMD_COUNT);
     for (int i=0;i<TensorProgram::cmd_properties.size();i++)
       assert(TensorProgram::cmd_properties[i].type == i);
-    if (!proc || backend != proc->used_backend)
+    if (!proc || _backend != proc->backend)
     {
       proc.reset(new TensorProcessor());
-      proc->used_backend = backend;
+      proc->backend = _backend;
     }
     #if defined(USE_GPU)
-    if (proc->used_backend == "GPU")
+    if (proc->backend == Backend::GPU)
       proc->pImpl = CreateTensorProcessorImpl_GPU(vk_utils::globalContextGet(false, 0u), 256);
     else
     #endif
       proc->pImpl = std::shared_ptr<TensorProcessorImpl>(new TensorProcessorImpl());
   }
+
+  void TensorProcessor::set_runtime_settings(RuntimeSettings settings)
+  {
+    if (proc && proc->pImpl)
+    {
+      proc->settings = settings;
+      proc->pImpl->use_coop_mat_mul = settings.use_coop_mat_mul;
+    }
+  }
+
   TensorProcessor::TensorProcessor()
   {
 
@@ -89,10 +99,12 @@ namespace nn
   void TensorProcessor::set_program(const TensorProgram &_program)
   {
     if (!proc)
-      TensorProcessor::init("CPU");
+      TensorProcessor::init(Backend::CPU);
     else
-      TensorProcessor::init(proc->used_backend);
+      TensorProcessor::init(proc->backend);
     
+    TensorProcessor::set_runtime_settings(proc->settings);
+
     proc->program = _program;
     proc->pImpl->allocate_memory(proc->program.total_memory_req);
     proc->pImpl->CommitDeviceData();

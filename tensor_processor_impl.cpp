@@ -140,12 +140,15 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       #endif
       if (B.Dim == 2 && 
           A.sizes[0] % 8 == 0 && A.sizes[1] % 8 == 0 &&
-          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0)
+          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0 &&
+          use_coop_mat_mul)
       {
         MatMulTranspose(memory.data(), A.offset, memory.data(), B.offset, memory.data(), C.offset, A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0]);
       }
       else
+      {
         kernel2D_matmul_transposed(memory.data(), A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0], A, B, C);
+      }
       break;
     case nn::TensorProgram::MOV:
       kernel1D_copy(memory.data(), A.total_size, 0, 0, A, C);

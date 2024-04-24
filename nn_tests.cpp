@@ -2001,7 +2001,7 @@ void tp_test_1_tensor_processor()
         tests[i] = i+1;
     }
 
-    TensorProcessor::init("CPU");
+    TensorProcessor::init(TensorProcessor::Backend::CPU);
 
     for (int i=0;i<80;i++)
       printf("#");
@@ -2048,7 +2048,7 @@ void tp_test_1_tensor_processor()
         tests[i] = i+1;
     }
 
-    TensorProcessor::init("GPU");
+    TensorProcessor::init(TensorProcessor::Backend::GPU);
 
     for (int i=0;i<80;i++)
       printf("#");
@@ -2105,7 +2105,7 @@ void tp_test_1_tensor_processor()
         tests[i] = i+1;
     }
     
-    TensorProcessor::init("GPU");
+    TensorProcessor::init(TensorProcessor::Backend::GPU);
 
     for (int i=0;i<80;i++)
       printf("#");

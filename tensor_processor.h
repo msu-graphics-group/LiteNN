@@ -127,7 +127,18 @@ namespace nn
   class TensorProcessor
   {
   public:
-    static void init(std::string backend = "CPU");
+    enum class Backend
+    {
+      CPU,
+      GPU
+    };
+
+    struct RuntimeSettings
+    {
+      bool use_coop_mat_mul = true;
+    };
+
+    static void init(Backend backend);
     //sets given program for execution. Initializes memory etc.
     static void set_program(const TensorProgram &program);
     //transfers data to input tensor with <name>
@@ -139,12 +150,14 @@ namespace nn
     static void get_output(const std::string &name, float *data, unsigned data_size);
     static void execute();
     static void print_execution_stat();
+    static void set_runtime_settings(RuntimeSettings settings);
   private:
     TensorProcessor();
     std::shared_ptr<TensorProcessorImpl> pImpl;
     TensorProgram program;
     std::map<std::string, bool> input_prepared;
     bool program_prepared = false;
-    std::string used_backend = "CPU";
+    Backend backend;
+    RuntimeSettings settings;
   };
 }
