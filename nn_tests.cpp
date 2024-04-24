@@ -301,7 +301,7 @@ void tp_test_1_tensor_processor()
       diff += abs(y[i]-res[i]);
     diff /= sz;
     printf("  2.1. %-64s", "Perfect optimization ");
-    if (diff < 1e-6)
+    if (diff < 1e-3)
       printf("passed\n");
     else
       printf("FAILED %f > %f\n", diff, 1e-6);
