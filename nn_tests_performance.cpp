@@ -124,13 +124,65 @@ namespace nn
     }
   }
 
+  void perf_test_2_MLP()
+  {
+    Dataset dataset;
+    read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
+
+    NeuralNetwork nn2;
+    nn2.add_layer(std::make_shared<FlattenLayer>(28,28,1));
+    nn2.add_layer(std::make_shared<DenseLayer>(28*28*1, 256), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(256, 256), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(256, 10), Initializer::He);
+    nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+auto t_1 = std::chrono::steady_clock::now();
+    nn2.train(dataset.train_data.data(), dataset.train_labels.data(), dataset.train_elements,
+              128, 100, false, OptimizerAdam(0.0001f), Loss::CrossEntropy);
+auto t_2 = std::chrono::steady_clock::now();
+
+    std::vector<float> y_res(dataset.train_labels.size(),0);
+
+auto t_3 = std::chrono::steady_clock::now();
+    nn2.evaluate(dataset.train_data, y_res);
+auto t_4 = std::chrono::steady_clock::now();
+
+    float acc = 0.0f;
+    float cnt = 0.0f;
+    for (int i=0;i<dataset.train_labels.size();i+=10)
+    {
+      int max_pos = 0;
+      int ref_max_pos = 0;
+      for (int j=0;j<10;j++)
+      {
+        if (y_res[i+j] > y_res[i+max_pos])
+          max_pos = j;
+        if (dataset.train_labels[i+j] > dataset.train_labels[i+ref_max_pos])
+          ref_max_pos = j;
+      }
+
+      acc += (max_pos == ref_max_pos);
+      cnt++;
+    }
+    float error_rate = 1 - acc/cnt;
+
+    float t_train =    0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_2 - t_1).count();
+    float t_evaluate = 0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
+
+    printf("error rate %f\n", error_rate);
+    printf("t_train = %f ms\n", t_train);
+    printf("t_eval  = %f ms\n", t_evaluate);
+  }
+
   void perform_tests_performance(const std::vector<int> &test_ids)
   {
     srand(time(NULL));
     std::vector<int> tests = test_ids;
 
     std::vector<std::function<void(void)>> test_functions = {
-      perf_test_1_matmul,
+      perf_test_1_matmul, perf_test_2_MLP,
     };
 
     if (tests.empty())
