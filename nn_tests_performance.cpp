@@ -184,13 +184,77 @@ auto t_4 = std::chrono::steady_clock::now();
     printf("t_eval  = %f ms\n", t_evaluate);
   }
 
+  void perf_test_3_SIREN()
+  {
+    auto circle_sdf = [](float x, float y, float z) -> float
+    {
+      return std::sqrt(x*x+y*y+z*z) - 0.75;
+    };
+
+    int samples = 100000;
+    std::vector<float> points(3*samples);
+    std::vector<float> distances(samples);
+
+    for (int i=0;i<samples;i++)
+    {
+      float x = 2*((double)rand())/RAND_MAX - 1;
+      float y = 2*((double)rand())/RAND_MAX - 1;
+      float z = 2*((double)rand())/RAND_MAX - 1;
+
+      points[3*i+0] = x;
+      points[3*i+1] = y;
+      points[3*i+2] = z;
+      distances[i] = circle_sdf(x,y,z);
+    }
+
+    std::vector<int> layers = {3,4,5};
+    std::vector<int> sizes = {64, 128, 256};
+
+    for (int m_mode = 0; m_mode <= 1; m_mode++)
+    {
+      nn::TensorProcessor::RuntimeSettings settings;
+      settings.use_coop_mat_mul = m_mode;
+
+      TensorProcessor::set_runtime_settings(settings);
+      printf("\nUse cooperative matrices: %d\n", m_mode);
+      
+      for (int it=0;it<sizes.size();it++)
+      {
+        printf("\nSIREN %d layers, %d size\n", layers[it], sizes[it]);
+        Siren siren(Siren::Type::SDF, layers[it], sizes[it]);
+
+auto t_1 = std::chrono::steady_clock::now();
+        siren.train(points, distances, 512, 10000);
+auto t_2 = std::chrono::steady_clock::now();
+
+        std::vector<float> predicted_distances(samples);
+
+auto t_3 = std::chrono::steady_clock::now();
+        siren.evaluate(points, predicted_distances);
+auto t_4 = std::chrono::steady_clock::now();
+
+        double diff = 0.0;
+        for (int i=0;i<predicted_distances.size();i++)
+          diff += abs(predicted_distances[i] - distances[i]);
+        diff /= predicted_distances.size();
+
+        float t_train =    0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_2 - t_1).count();
+        float t_evaluate = 0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
+
+        printf("diff = %f\n", diff);
+        printf("t_train = %f ms\n", t_train);
+        printf("t_eval  = %f ms\n", t_evaluate);
+      }
+    }
+  }
+
   void perform_tests_performance(const std::vector<int> &test_ids)
   {
     srand(time(NULL));
     std::vector<int> tests = test_ids;
 
     std::vector<std::function<void(void)>> test_functions = {
-      perf_test_1_matmul, perf_test_2_MLP,
+      perf_test_1_matmul, perf_test_2_MLP, perf_test_3_SIREN,
     };
 
     if (tests.empty())
