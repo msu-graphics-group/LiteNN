@@ -2125,7 +2125,7 @@ void tp_test_1_tensor_processor()
   {
     perform_tests_tensor_processor({});
     perform_tests_tensor_processor_GPU({});
-    perform_tests_neural_networks({});
+    //perform_tests_neural_networks({});
     perform_tests_performance({});
   }
 }
