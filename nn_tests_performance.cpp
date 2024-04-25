@@ -207,7 +207,7 @@ namespace nn
       return std::sqrt(x*x+y*y+z*z) - 0.75;
     };
 
-    int samples = 100000;
+    int samples = 512*100;
     std::vector<float> points(3*samples);
     std::vector<float> distances(samples);
 
@@ -240,7 +240,7 @@ namespace nn
         Siren siren(Siren::Type::SDF, layers[it], sizes[it]);
 
 auto t_1 = std::chrono::steady_clock::now();
-        siren.train(points, distances, 512, 10000);
+        siren.train(points, distances, 512, 20000);
 auto t_2 = std::chrono::steady_clock::now();
 
         std::vector<float> predicted_distances(samples);
@@ -264,13 +264,92 @@ auto t_4 = std::chrono::steady_clock::now();
     }
   }
 
+  void perf_test_4_CNN()
+  {
+    /*
+      model = nn.Sequential(
+          nn.Conv2d(3,6,5),
+          nn.ReLU(),
+          nn.MaxPool2d(2, 2),
+          nn.Conv2d(6, 16, 5),
+          nn.ReLU(),
+          nn.MaxPool2d(2, 2),
+          nn.Flatten(),
+          nn.Linear(16 * 5 * 5, 120),
+          nn.ReLU(),
+          nn.Linear(120, 84),
+          nn.ReLU(),
+          nn.Linear(84, 10))*/
+    
+    Dataset dataset;
+    read_CIFAR10_dataset(base_path + std::string("resources/cifar-10-dataset"), &dataset);
+    train_test_split(&dataset, 0.166666666666f);
+
+    NeuralNetwork nn2;
+    //nn2.add_layer(std::make_shared<Conv2DLayer>(32,32,3, 32, 5), Initializer::GlorotNormal);
+    //nn2.add_layer(std::make_shared<ReLULayer>());
+    //nn2.add_layer(std::make_shared<MaxPoolingLayer>(28, 28, 32));
+    //nn2.add_layer(std::make_shared<Conv2DLayer>(14,14,32, 32), Initializer::GlorotNormal);
+    //nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<Conv2DLayer>(32,32,3, 6, 5), Initializer::GlorotNormal);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<MaxPoolingLayer>(28, 28, 6));
+    nn2.add_layer(std::make_shared<Conv2DLayer>(14,14,6, 16, 5), Initializer::GlorotNormal);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<MaxPoolingLayer>(10, 10, 16));    
+    nn2.add_layer(std::make_shared<FlattenLayer>(5,5,16));
+    nn2.add_layer(std::make_shared<DenseLayer>(5*5*16, 120), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(120, 84), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(84, 10), Initializer::He);
+    nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+auto t_1 = std::chrono::steady_clock::now();
+    nn2.train(dataset.train_data, dataset.train_labels, 4, 125000, OptimizerAdam(1e-4f), Loss::CrossEntropy, true);
+auto t_2 = std::chrono::steady_clock::now();
+
+    std::vector<float> y_res(dataset.train_labels.size(),0);
+
+auto t_3 = std::chrono::steady_clock::now();
+    nn2.evaluate(dataset.train_data, y_res);
+auto t_4 = std::chrono::steady_clock::now();
+
+    float acc = 0.0f;
+    float cnt = 0.0f;
+    for (int i=0;i<dataset.train_labels.size();i+=10)
+    {
+      int max_pos = 0;
+      int ref_max_pos = 0;
+      for (int j=0;j<10;j++)
+      {
+        if (y_res[i+j] > y_res[i+max_pos])
+          max_pos = j;
+        if (dataset.train_labels[i+j] > dataset.train_labels[i+ref_max_pos])
+          ref_max_pos = j;
+      }
+
+      acc += (max_pos == ref_max_pos);
+      cnt++;
+    }
+    float error_rate = 1 - acc/cnt;
+
+    float t_train =    0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_2 - t_1).count();
+    float t_evaluate = 0.001*std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
+
+    printf(" error rate %f\n", error_rate);
+    printf("t_train = %f ms\n", t_train);
+    printf("t_eval  = %f ms\n", t_evaluate);
+  }
+
   void perform_tests_performance(const std::vector<int> &test_ids)
   {
     srand(time(NULL));
     std::vector<int> tests = test_ids;
 
     std::vector<std::function<void(void)>> test_functions = {
-      perf_test_1_matmul, perf_test_2_MLP, perf_test_3_SIREN,
+      perf_test_1_matmul, perf_test_2_MLP, perf_test_3_SIREN, 
+      perf_test_4_CNN
     };
 
     if (tests.empty())
