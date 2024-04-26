@@ -330,6 +330,69 @@ auto t_4 = std::chrono::steady_clock::now();
     }
   }
 
+  void perf_test_5_MLP_forward()
+  {
+    Dataset dataset;
+    read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
+
+    unsigned m_size = 512;
+
+    for (int m_mode = 0; m_mode <= 1; m_mode++)
+    {
+      nn::TensorProcessor::RuntimeSettings settings;
+      settings.use_coop_mat_mul = m_mode;
+
+      TensorProcessor::set_runtime_settings(settings);
+      printf("\nUse cooperative matrices: %d\n", m_mode);
+
+      NeuralNetwork nn2;
+      nn2.add_layer(std::make_shared<FlattenLayer>(28, 28, 1));
+      nn2.add_layer(std::make_shared<DenseLayer>(28 * 28 * 1, m_size), Initializer::He);
+      nn2.add_layer(std::make_shared<ReLULayer>());
+      nn2.add_layer(std::make_shared<DenseLayer>(m_size, m_size), Initializer::He);
+      nn2.add_layer(std::make_shared<ReLULayer>());
+      nn2.add_layer(std::make_shared<DenseLayer>(m_size, m_size), Initializer::He);
+      nn2.add_layer(std::make_shared<ReLULayer>());
+      nn2.add_layer(std::make_shared<DenseLayer>(m_size, 10), Initializer::He);
+      nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+      nn2.initialize_from_file(base_path + std::string("models/MNIST_MLP_512.bin"));
+      nn2.set_batch_size_for_evaluate(2048);
+
+      int tries = 20;
+      std::vector<float> y_res(dataset.train_labels.size(), 0);
+
+auto t_3 = std::chrono::steady_clock::now();
+      for (int i=0;i<tries;i++)
+        nn2.evaluate(dataset.train_data, y_res);
+auto t_4 = std::chrono::steady_clock::now();
+
+      float acc = 0.0f;
+      float cnt = 0.0f;
+      for (int i = 0; i < dataset.train_labels.size(); i += 10)
+      {
+        int max_pos = 0;
+        int ref_max_pos = 0;
+        for (int j = 0; j < 10; j++)
+        {
+          if (y_res[i + j] > y_res[i + max_pos])
+            max_pos = j;
+          if (dataset.train_labels[i + j] > dataset.train_labels[i + ref_max_pos])
+            ref_max_pos = j;
+        }
+
+        acc += (max_pos == ref_max_pos);
+        cnt++;
+      }
+      float error_rate = 1 - acc / cnt;
+
+      float t_evaluate = 0.001 * std::chrono::duration_cast<std::chrono::microseconds>(t_4 - t_3).count();
+
+      printf("error rate %f\n", error_rate);
+      printf("t_eval  = %f ms\n", t_evaluate/tries);
+    }
+  }
+
   void perform_tests_performance(const std::vector<int> &test_ids)
   {
     srand(time(NULL));
@@ -337,7 +400,7 @@ auto t_4 = std::chrono::steady_clock::now();
 
     std::vector<std::function<void(void)>> test_functions = {
       perf_test_1_matmul, perf_test_2_MLP, perf_test_3_SIREN, 
-      perf_test_4_CNN
+      perf_test_4_CNN, perf_test_5_MLP_forward
     };
 
     if (tests.empty())
