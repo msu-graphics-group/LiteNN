@@ -139,8 +139,8 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
         fprintf(stderr, "TensorProgram: MATMUL_T workgroup Y size (%u) exceeds limit. Program won't execute correctly!\n", B.sizes[1]);
       #endif
       if (B.Dim == 2 && 
-          A.sizes[0] % 8 == 0 && A.sizes[1] % 8 == 0 &&
-          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0 &&
+          A.sizes[0] % 16 == 0 && A.sizes[1] % 16 == 0 &&
+          B.sizes[0] % 16 == 0 && B.sizes[1] % 16 == 0 &&
           use_coop_mat_mul)
       {
         MatMulTranspose(memory.data(), A.offset, memory.data(), B.offset, memory.data(), C.offset, A.sizes[1], B.Dim == 2 ? B.sizes[1] : 1, A.sizes[0]);

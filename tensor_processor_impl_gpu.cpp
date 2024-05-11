@@ -1702,8 +1702,8 @@ void TensorProcessorImpl_GPU::copyKernelFloatCmd(uint32_t length)
 
 void TensorProcessorImpl_GPU::matMulTransposeCmd(uint32_t A_offset, uint32_t B_offset, uint32_t C_offset, uint32_t A_col_len, uint32_t B_col_len, uint32_t A_row_len)
 {
-  const uint32_t blockSizeX = 8;
-  const uint32_t blockSizeY = 8;
+  const uint32_t blockSizeX = 8 * 2;
+  const uint32_t blockSizeY = 8 * 2;
 
   vkCmdBindPipeline(m_currCmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, matMulTransposePipeline);
   struct KernelArgsPC
@@ -1961,8 +1961,8 @@ void TensorProcessorImpl_GPU::processCmd(VkCommandBuffer a_commandBuffer, const 
         fprintf(stderr, "TensorProgram: MATMUL_T workgroup Y size (%u) exceeds limit. Program won't execute correctly!\n", B.sizes[1]);
       #endif
       if (B.Dim == 2 && 
-          A.sizes[0] % 8 == 0 && A.sizes[1] % 8 == 0 &&
-          B.sizes[0] % 8 == 0 && B.sizes[1] % 8 == 0 &&
+          A.sizes[0] % 16 == 0 && A.sizes[1] % 16 == 0 &&
+          B.sizes[0] % 16 == 0 && B.sizes[1] % 16 == 0 &&
           use_coop_mat_mul)
       {
         vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, matMulTransposeLayout, 0, 1, &m_allGeneratedDS[5], 0, nullptr);
