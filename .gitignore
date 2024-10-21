@@ -46,3 +46,7 @@ _deps/*
 dependencies/*
 math_tests
 python_scripts/data/*
+
+shaders_gpu/*
+tensor_processor_impl_gpu*
+include/TensorProcessorImpl_gpu_ubo.h
