@@ -20,10 +20,8 @@
 #include "nn_tests.h"
 #include "direct/nnd_tests.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 void perform_tests_args(char **argv, int argc, int start)
 {

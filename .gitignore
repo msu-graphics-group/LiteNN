@@ -1,52 +1,16 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
 .vscode
+
 *.png
-cmake_install.cmake
-CMakeCache.txt
-CMakeFiles/*
+
+
 nn_test
-Makefile
-*.txt
-*.spv
-*.bin
 
 _deps/*
-dependencies/*
 math_tests
 python_scripts/data/*
 
-shaders_gpu/*
-tensor_processor_impl_gpu*
-include/TensorProcessorImpl_gpu_ubo.h
+src/shaders_gpu/*
+src/tensor_processor_impl_gpu*
+src/include/TensorProcessorImpl_gpu_ubo.h
+
+3rd_party/ext/ext

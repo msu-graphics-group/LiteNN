@@ -12,13 +12,13 @@
 #include <chrono>
 #include <cmath>
 
-#include "tensors.h"
-#include "neural_network.h"
-#include "siren.h"
+#include "direct/tensors.h"
+#include "direct/neural_network.h"
+#include "direct/siren.h"
 #include "nnd_tests.h"
 
-#include "../stb_image.h"
-#include "../stb_image_write.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 
 namespace nnd
