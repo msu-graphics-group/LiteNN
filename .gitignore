@@ -14,3 +14,5 @@ src/tensor_processor_impl_gpu*
 src/include/TensorProcessorImpl_gpu_ubo.h
 
 3rd_party/ext/ext
+
+build
