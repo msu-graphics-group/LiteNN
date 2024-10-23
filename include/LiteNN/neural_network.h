@@ -1,5 +1,7 @@
-#pragma once
-#include "tensor_compiler.h"
+#ifndef INCLUDE_LITENN_NEURAL_NETWORK_H_
+#define INCLUDE_LITENN_NEURAL_NETWORK_H_
+
+#include <LiteNN/tensor_compiler.h>
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -640,3 +642,5 @@ namespace nn
     TensorProgram evaluate_prog;
   };
 }
+
+#endif

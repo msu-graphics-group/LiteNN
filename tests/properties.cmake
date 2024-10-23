@@ -10,5 +10,11 @@ set(MODULE_SOURCES
 )
 
 set(MODULE_LIBS
-    LiteNN litenn_ext stb
+    LiteNN stb
 )
+
+if(LITENN_ENABLE_VULKAN)
+    set(MODULE_LIBS ${MODULE_LIBS}
+        litenn_ext
+    )
+endif()

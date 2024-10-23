@@ -1,5 +1,7 @@
-#pragma once
-#include "neural_network.h"
+#ifndef INCLUDE_LITENN_SIREN_H_
+#define INCLUDE_LITENN_SIREN_H_
+
+#include <LiteNN/neural_network.h>
 
 namespace nn
 {
@@ -24,3 +26,5 @@ namespace nn
     std::vector<float> distance;
   };
 }
+
+#endif

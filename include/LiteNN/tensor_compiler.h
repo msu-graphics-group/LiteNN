@@ -1,5 +1,7 @@
-#pragma once
-#include "tensor_processor.h"
+#ifndef INCLUDE_LITENN_TENSOR_COMPILER_H_
+#define INCLUDE_LITENN_TENSOR_COMPILER_H_
+
+#include <LiteNN/tensor_processor.h>
 #include <cassert>
 #include <map>
 #include <string>
@@ -155,3 +157,5 @@ namespace nn
     unsigned sizes[TensorProgram::MAX_DIM] = {0};
   };
 }
+
+#endif

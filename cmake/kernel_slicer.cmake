@@ -1,6 +1,6 @@
 
 if(NOT DEFINED USE_KSLICER_DIR)
-	set(USE_KSLICER_DIR "../kernel_slicer")
+	set(USE_KSLICER_DIR "../kernel_slicer" CACHE STRING "Kernel slicer directory")
 endif()
 
 if(NOT DEFINED KERNEL_SLICER) 
@@ -11,5 +11,3 @@ if(NOT DEFINED KERNEL_SLICER)
 						   ${USE_KSLICER_DIR}
                        	   ABSOLUTE)
 endif()
-
-message(KERNEL_SLICER="${KERNEL_SLICER}")

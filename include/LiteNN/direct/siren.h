@@ -1,5 +1,7 @@
-#pragma once
-#include "neural_network.h"
+#ifndef INCLUDE_LITENN_DIRECT_SIREN_H_
+#define INCLUDE_LITENN_DIRECT_SIREN_H_
+
+#include <LiteNN/direct/neural_network.h>
 
 namespace nnd
 {
@@ -24,3 +26,5 @@ namespace nnd
     TensorView res_tv;
   };
 }
+
+#endif

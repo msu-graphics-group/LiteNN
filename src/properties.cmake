@@ -22,7 +22,6 @@ set(MODULE_GENERATED_SOURCES
 
 set(MODULE_LIBS
     OpenMP::OpenMP_CXX
-    litenn_ext
 )
 
 if(LITENN_ENABLE_VULKAN)
@@ -31,6 +30,7 @@ if(LITENN_ENABLE_VULKAN)
         volk 
         dl
         Vulkan::Vulkan
+        litenn_ext
     )
 
 endif()

@@ -1,4 +1,4 @@
-#include "siren.h"
+#include "direct/siren.h"
 #include <cassert>
 
 namespace nnd

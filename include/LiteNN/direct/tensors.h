@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INCLUDE_LITENN_DIRECT_TENSORS_H_
+#define INCLUDE_LITENN_DIRECT_TENSORS_H_
+
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -142,3 +144,5 @@ namespace nnd
     }                                                                     \
   }
 }
+
+#endif

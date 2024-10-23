@@ -1,5 +1,6 @@
-#pragma once
-#include "tensor_processor.h"
+#ifndef INCLUDE_LITENN_TENSOR_PROCESSOR_IMPL_H_
+#define INCLUDE_LITENN_TENSOR_PROCESSOR_IMPL_H_
+#include <LiteNN/tensor_processor.h>
 
 extern std::vector<float> _stat_time_cmd_num;
 extern std::vector<float> _stat_time_cmd_id;
@@ -106,3 +107,5 @@ protected:
   virtual void __attribute__((noinline)) kernel1D_set_input(const float* data_in, unsigned offset, unsigned a_size);
   virtual void __attribute__((noinline)) kernel1D_get_output(float* data_out, unsigned offset, unsigned a_size);
 };
+
+#endif

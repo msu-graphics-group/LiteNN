@@ -1,5 +1,5 @@
-#include "tensors.h"
-#include "neural_network.h"
+#include "direct/tensors.h"
+#include "direct/neural_network.h"
 #include <cassert>
 #include <cstdio>
 #include <string>

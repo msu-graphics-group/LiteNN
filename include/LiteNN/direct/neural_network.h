@@ -1,5 +1,7 @@
-#pragma once
-#include "tensors.h"
+#ifndef INCLUDE_LITENN_DIRECT_NEURAL_NETWORK_H_
+#define INCLUDE_LITENN_DIRECT_NEURAL_NETWORK_H_
+
+#include <LiteNN/direct/tensors.h>
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -194,3 +196,5 @@ namespace nnd
     std::vector<TensorView> layer_outputs;
   };
 }
+
+#endif

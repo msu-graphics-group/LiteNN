@@ -13,7 +13,7 @@ include(FetchContent)
 FetchContent_Declare(
     LiteMath
     URL      https://github.com/msu-graphics-group/LiteMath/archive/refs/heads/main.zip
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/LiteMath
+    SOURCE_DIR ${LITENN_EXT_DEPS}/ext/LiteMath
 )
 FetchContent_MakeAvailable(LiteMath)
 
@@ -21,33 +21,33 @@ if(LITENN_ENABLE_VULKAN)
     FetchContent_Declare(
         volk
         URL      https://github.com/zeux/volk/archive/refs/heads/master.zip
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/volk
+        SOURCE_DIR ${LITENN_EXT_DEPS}/ext/volk
     )
 
     FetchContent_Declare(
         vkutils
         URL      https://github.com/msu-graphics-group/vk-utils/archive/refs/heads/master.zip
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/vkutils
+        SOURCE_DIR ${LITENN_EXT_DEPS}/ext/vkutils
     )
 
     FetchContent_MakeAvailable(volk vkutils)
-endif()
 
 #FETCHING LIBRARIES END
 
 
 
-include(properties.cmake)
+    include(properties.cmake)
 
 
-add_library(${MODULE_NAME}
-    ${MODULE_SOURCES}
-)
+    add_library(${MODULE_NAME}
+        ${MODULE_SOURCES}
+    )
 
-target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
+    target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
 
-target_link_libraries(${MODULE_NAME} 
-    PUBLIC
-    ${MODULE_LIBS}
-    PRIVATE litenn_ext_compile_options 
-)
+    target_link_libraries(${MODULE_NAME} 
+        PUBLIC
+        ${MODULE_LIBS}
+        PRIVATE litenn_ext_compile_options 
+    )
+endif()

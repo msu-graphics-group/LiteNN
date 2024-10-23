@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INCLUDE_LITENN_TENSOR_PROCESSOR_H_
+#define INCLUDE_LITENN_TENSOR_PROCESSOR_H_
+
 #include <vector>
 #include <cmath>
 #include <map>
@@ -161,3 +163,5 @@ namespace nn
     RuntimeSettings settings;
   };
 }
+
+#endif

@@ -15,6 +15,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     target_compile_options(litenn_lib_compile_options INTERFACE -g)
 endif()
 
+
 include(properties.cmake)
 
 if(LITENN_ENABLE_VULKAN)
@@ -37,9 +38,13 @@ if(LITENN_ENABLE_VULKAN)
     add_custom_command(OUTPUT ${LITENN_SRC_DIR}/shaders_gpu/shaders.stamp
                        COMMAND chmod ug+x ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu/build.sh
                        COMMAND /usr/bin/bash -c ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu/build.sh
+                       COMMAND ${CMAKE_COMMAND} -E create_symlink ${LITENN_PROJECT_ROOT}/resources
+                                                    ${CMAKE_BINARY_DIR}/resources
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory ${LITENN_SRC_DIR}/shaders_gpu
+                                                    ${CMAKE_BINARY_DIR}/shaders_gpu
                        COMMAND ${CMAKE_COMMAND} -E touch my_file.stamp
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu
-                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu)
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu ${MODULE_GENERATED_SOURCES})
 
     add_custom_target(shaders ALL
                       DEPENDS ${LITENN_SRC_DIR}/shaders_gpu/shaders.stamp)
@@ -49,14 +54,14 @@ if(LITENN_ENABLE_VULKAN)
 
     link_directories(${LITENN_EXT_DEPS}/volk)
 
-    target_compile_definitions(litenn_lib_compile_options INTERFACE USE_GPU)
-    target_compile_definitions(litenn_lib_compile_options INTERFACE USE_VOLK)
 
 endif()
 
 add_library(${MODULE_NAME}
     ${MODULE_SOURCES}
 )
+
+target_include_directories(${MODULE_NAME} PUBLIC ${LITENN_PROJECT_ROOT}/include)
 
 target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
 

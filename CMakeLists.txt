@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
 
-
 option(LITENN_ENABLE_VULKAN "Include GPU support for neural networks with Kernel Slicer" ON)
 
 project(LiteNN CXX)
@@ -12,6 +11,8 @@ find_package(OpenMP REQUIRED)
 
 add_library(litenn_project_compile_options INTERFACE)
 target_compile_features(litenn_project_compile_options INTERFACE cxx_std_17)
+target_include_directories(litenn_project_compile_options INTERFACE include/LiteNN)
+
 
 set(LITENN_PROJECT_ROOT ${PROJECT_SOURCE_DIR})
 set(LITENN_SRC_DIR ${LITENN_PROJECT_ROOT}/src)
@@ -28,6 +29,9 @@ if(LITENN_ENABLE_VULKAN)
   find_package(Vulkan REQUIRED)
   find_package(LLVM 17 REQUIRED CONFIG)
   find_package(Clang 17 REQUIRED)
+
+  target_compile_definitions(litenn_project_compile_options INTERFACE USE_GPU)
+  target_compile_definitions(litenn_project_compile_options INTERFACE USE_VOLK)
 
   include(cmake/kernel_slicer.cmake)
 
