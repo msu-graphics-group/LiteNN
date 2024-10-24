@@ -1,7 +1,7 @@
 .vscode
 
 *.png
-
+!resources/*.png
 
 nn_test
 

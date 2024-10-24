@@ -23,6 +23,9 @@
 
 namespace nnd
 {
+
+  static const std::string TEST_IMAGE = "resources/1a.png";
+
   void write_image_rgb(std::string path, const TensorView &image_tensor)
   {
     assert(image_tensor.Dim == 3);
@@ -157,7 +160,7 @@ namespace nnd
   void test_3_SIREN_image()
   {
     std::vector<float> image_data, pixel_data, image_data_grayscale;
-    TensorView view = read_image_rgb("1a.png", image_data);
+    TensorView view = read_image_rgb(TEST_IMAGE, image_data);
     IndexType pixel_count = view.size(1)*view.size(2);
     pixel_data.resize(2*pixel_count, 0);
     image_data_grayscale.resize(pixel_count, 0);

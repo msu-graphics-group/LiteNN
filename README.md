@@ -30,4 +30,5 @@ To run tests use:
     ./litenn_test
 
 or 
+
     ./path/to/LiteNN/litenn_test

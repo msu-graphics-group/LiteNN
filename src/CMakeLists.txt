@@ -23,7 +23,8 @@ if(LITENN_ENABLE_VULKAN)
     add_custom_command(OUTPUT ${MODULE_GENERATED_SOURCES} ${LITENN_SRC_DIR}/shaders_gpu
                        COMMAND ${KERNEL_SLICER} ${LITENN_SRC_DIR}/tensor_processor_impl.cpp 
                                 -mainClass TensorProcessorImpl 
-                                -stdlibfolder ${KERNEL_SLICER_DIR}/TINYSTL 
+                                -stdlibfolder ${KERNEL_SLICER_DIR}/TINYSTL
+                                -shaderFolderPrefix ${CMAKE_BINARY_DIR}/shaders_gpu 
                                 -pattern ipv 
                                 -reorderLoops YX 
                                 -I${KERNEL_SLICER_DIR}/apps/LiteMath ignore 

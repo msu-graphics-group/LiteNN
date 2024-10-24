@@ -25,6 +25,8 @@
 
 namespace nn
 {
+  static const std::string TEST_IMAGE = "resources/1a.png";
+
   std::string base_path = "";
 
   void read_image_rgb(std::string path, std::vector<float> &image_data, int &width, int &height)
@@ -313,7 +315,7 @@ void tp_test_1_tensor_processor()
     printf("TEST 3. SIREN 2D\n");
     std::vector<float> image_data, pixel_data, image_data_grayscale;
     int width=0, height=0;
-    read_image_rgb("1a.png", image_data, width, height);
+    read_image_rgb(TEST_IMAGE, image_data, width, height);
     assert(width*height > 0);
     int pixel_count = image_data.size()/3;
     pixel_data.resize(2*pixel_count, 0);
@@ -860,7 +862,7 @@ void tp_test_1_tensor_processor()
 
     std::vector<float> image_data, pixel_data, image_data_grayscale;
     int width=0, height=0;
-    read_image_rgb("1a.png", image_data, width, height);
+    read_image_rgb(TEST_IMAGE, image_data, width, height);
     assert(width*height > 0);
     int pixel_count = image_data.size()/3;
     pixel_data.resize(2*pixel_count, 0);
