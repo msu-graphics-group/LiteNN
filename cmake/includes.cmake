@@ -8,4 +8,3 @@ if(LITENN_ENABLE_VULKAN)
 endif()
 
 include_directories(src)
-include_directories(include/LiteNN)

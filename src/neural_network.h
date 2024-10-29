@@ -1,7 +1,7 @@
 #ifndef INCLUDE_LITENN_NEURAL_NETWORK_H_
 #define INCLUDE_LITENN_NEURAL_NETWORK_H_
 
-#include <LiteNN/tensor_compiler.h>
+#include "tensor_compiler.h"
 #include <vector>
 #include <cstdint>
 #include <array>

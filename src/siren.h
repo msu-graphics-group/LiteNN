@@ -1,7 +1,7 @@
 #ifndef INCLUDE_LITENN_SIREN_H_
 #define INCLUDE_LITENN_SIREN_H_
 
-#include <LiteNN/neural_network.h>
+#include "neural_network.h"
 
 namespace nn
 {

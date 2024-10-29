@@ -1,6 +1,6 @@
 #ifndef INCLUDE_LITENN_TENSOR_PROCESSOR_IMPL_H_
 #define INCLUDE_LITENN_TENSOR_PROCESSOR_IMPL_H_
-#include <LiteNN/tensor_processor.h>
+#include "tensor_processor.h"
 
 extern std::vector<float> _stat_time_cmd_num;
 extern std::vector<float> _stat_time_cmd_id;
@@ -19,9 +19,7 @@ public:
 protected:
   std::vector<float> memory;
   constexpr static unsigned AGroupSize = 256;
-#ifndef KERNEL_SLICER
-  bool use_coop_mat_mul = true;
-#endif
+  bool use_coop_mat_mul = false;
 
   virtual void allocate_memory(unsigned size);
   virtual void set_input(const float* in __attribute__((size("size"))), unsigned offset, unsigned size);

@@ -24,12 +24,13 @@ if(LITENN_ENABLE_VULKAN)
                        COMMAND ${KERNEL_SLICER} ${LITENN_SRC_DIR}/tensor_processor_impl.cpp 
                                 -mainClass TensorProcessorImpl 
                                 -stdlibfolder ${KERNEL_SLICER_DIR}/TINYSTL
-                                -shaderFolderPrefix ${CMAKE_BINARY_DIR}/shaders_gpu 
+                               # -shaderFolderPrefix ${CMAKE_BINARY_DIR}/
                                 -pattern ipv 
                                 -reorderLoops YX 
                                 -I${KERNEL_SLICER_DIR}/apps/LiteMath ignore 
                                 -I${KERNEL_SLICER_DIR}/apps/LiteMathAux ignore 
                                 -I${KERNEL_SLICER_DIR}/TINYSTL ignore 
+                              #  -I${LITENN_PROJECT_ROOT}/include ignore
                                 -shaderCC glsl 
                                 -suffix _GPU 
                                 -DKERNEL_SLICER -v
@@ -41,7 +42,7 @@ if(LITENN_ENABLE_VULKAN)
                        COMMAND /usr/bin/bash -c ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu/build.sh
                        COMMAND ${CMAKE_COMMAND} -E create_symlink ${LITENN_PROJECT_ROOT}/resources
                                                     ${CMAKE_BINARY_DIR}/resources
-                       COMMAND ${CMAKE_COMMAND} -E copy_directory ${LITENN_SRC_DIR}/shaders_gpu
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu
                                                     ${CMAKE_BINARY_DIR}/shaders_gpu
                        COMMAND ${CMAKE_COMMAND} -E touch my_file.stamp
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shaders_gpu

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_LITENN_TENSOR_COMPILER_H_
 #define INCLUDE_LITENN_TENSOR_COMPILER_H_
 
-#include <LiteNN/tensor_processor.h>
+#include "tensor_processor.h"
 #include <cassert>
 #include <map>
 #include <string>

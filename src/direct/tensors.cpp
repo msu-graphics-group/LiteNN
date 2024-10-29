@@ -1,4 +1,4 @@
-#include "direct/tensors.h"
+#include "tensors.h"
 #include <cassert>
 #include <algorithm>
 #include <cstdio>
