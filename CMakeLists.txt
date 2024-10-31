@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 
 option(LITENN_ENABLE_VULKAN "Include GPU support for neural networks with Kernel Slicer" ON)
 
-project(LiteNN CXX)
+project(LiteNN C CXX)
 
 
 find_package(Threads REQUIRED)
