@@ -30,7 +30,6 @@ if(LITENN_ENABLE_VULKAN)
         volk 
         dl
         Vulkan::Vulkan
-        litenn_ext
     )
 
 endif()

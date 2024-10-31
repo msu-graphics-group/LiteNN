@@ -65,8 +65,13 @@ add_library(${MODULE_NAME}
 
 target_include_directories(${MODULE_NAME} PUBLIC ${LITENN_PROJECT_ROOT}/include)
 
+target_include_directories(${MODULE_NAME} PUBLIC ${LITENN_EXT_DEPS}/ext/LiteMath)
+
 target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
 
-target_link_libraries(${MODULE_NAME} PRIVATE
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
     ${MODULE_LIBS} litenn_lib_compile_options 
+    PUBLIC 
+    litenn_ext
 )
