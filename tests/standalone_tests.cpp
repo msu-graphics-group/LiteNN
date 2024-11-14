@@ -87,21 +87,16 @@ void perform_tests_args(char **argv, int argc, int start)
     nn::perform_tests_performance(test_ids["benchmark"]);
 }
 
-int main(int argc, char **argv)
-{
-  //nnd::perform_tests();
-  if (argc == 1)
-  {
+int main(int argc, char **argv) {
+  if (argc == 1) {
     nn::perform_all_tests();
-  }
-  else if (argv[1] == "-h" || argv[1] == "-help" || argv[1] == "--help")
-  {
+  } else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "-help") || !strcmp(argv[1], "--help"))  {
     printf("./nn_test <test_group_1> <test_1> <test_2> ... <test_group_k> <test_1>  ...\n");
     printf("test groups are [base, gpu, nn, benchmark]\n");
     printf("test_i is either test number or \"all\" for all tests\n");
     printf("e.g. ./nn_test base all gpu all   ./nn_test benchmark 1 2\n");
-  }
-  else
+  } else {
     perform_tests_args(argv, argc, 1);
+  }    
   return 0;
 }

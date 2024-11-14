@@ -624,5 +624,4 @@ namespace nn
     tp->add_command(TensorProgram::CONV_3D, A.id, kernel.id, res.id, stride);
     return res;
   }
-
 }

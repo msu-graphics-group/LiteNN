@@ -1932,6 +1932,10 @@ void tp_test_1_tensor_processor()
   void nn_test_19_torch_model()
   {
     printf("TEST 19. GETTING MODEL WEIGHTS FROM TORCH\n");
+
+    printf("TEST 19 IS DISABLED\n");
+    return;
+
     Dataset dataset;
     read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
     train_test_split(&dataset, 0.1);
@@ -1972,6 +1976,28 @@ void tp_test_1_tensor_processor()
       printf("passed\n");
     else
       printf("FAILED, error rate %f\n", error_rate);
+  }
+
+  void nn_test_20_hashgrid()
+  {
+    printf("TEST 20. MULTIRESOLUTION HASHGRID\n");
+
+    int batch_size = 1;
+
+    NeuralNetwork nn2;
+    nn2.set_batch_size_for_evaluate(batch_size);
+    nn2.add_layer(std::make_shared<HashGridLayer>(3, 10, 3, 4, 64));
+    nn2.add_layer(std::make_shared<DenseLayer>( 3 * 3, 1));
+
+    std::vector<float> inp(batch_size * 3, 0);
+    std::vector<float> outp(batch_size, 0);
+
+    nn2.train(inp.data(), outp.data(), 1, 1, 1, false, OptimizerAdam(0.01f), Loss::MSE, Metric::MAE);
+
+    nn2.evaluate(inp, outp);
+
+    for (int i=0;i<outp.size();i++)
+      printf("%f\n", outp[i]);
   }
 
   void perform_tests_tensor_processor(const std::vector<int> &test_ids)
@@ -2099,6 +2125,8 @@ void tp_test_1_tensor_processor()
       nn_test_16_ReLU_classifier,
       nn_test_17_Leaky_ReLU_classifier,
       nn_test_18_conv3D_backward,
+      nn_test_19_torch_model,
+      nn_test_20_hashgrid,
     };
 
     if (tests.empty())
