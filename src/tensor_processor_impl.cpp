@@ -1036,3 +1036,9 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
     }
   }
 }
+
+
+void TensorProcessorImpl::kernel1D_hashgrid(float *data, unsigned steps, Variable A, Variable B, Variable C)
+{
+  
+}

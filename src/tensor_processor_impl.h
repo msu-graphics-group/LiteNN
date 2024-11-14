@@ -82,6 +82,7 @@ protected:
   virtual void __attribute__((noinline)) kernel1D_minimum(float *data, unsigned steps, unsigned step_size, Variable A, Variable B); 
   virtual void __attribute__((noinline)) kernel1D_maximum(float *data, unsigned steps, unsigned step_size, Variable A, Variable B); 
 
+
   virtual void __attribute__((noinline)) kernel3D_transpose(float *data, unsigned steps, unsigned row_len, unsigned col_len, unsigned group_size, Variable A, Variable B); // B = (A)^T
   virtual void __attribute__((noinline)) kernel2D_matmul_transposed(float *data, unsigned A_col_len, unsigned B_col_len, 
                                           unsigned A_row_len, Variable A, Variable B, Variable C);                                // C = A * (B)^T
@@ -101,9 +102,11 @@ protected:
   virtual void __attribute__((noinline)) kernel3D_max_pool_3D_diff(float *data, int steps, int x_steps, int y_steps, int z_steps, 
                                                                    int window_x, int window_y, int window_z, Variable A, Variable B, Variable C); 
 
-
   virtual void __attribute__((noinline)) kernel1D_set_input(const float* data_in, unsigned offset, unsigned a_size);
   virtual void __attribute__((noinline)) kernel1D_get_output(float* data_out, unsigned offset, unsigned a_size);
+
+  virtual void __attribute__((noinline)) kernel1D_hashgrid(float *data, unsigned steps, Variable A, Variable B, Variable C);
+
 };
 
 #endif
