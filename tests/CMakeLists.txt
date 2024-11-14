@@ -21,6 +21,10 @@ add_executable(${MODULE_NAME}
     ${MODULE_SOURCES}
 )
 
+add_executable(hge
+    hge.cpp
+)
+
 target_compile_definitions(litenn_test_compile_options INTERFACE USE_GPU)
 target_compile_definitions(litenn_test_compile_options INTERFACE USE_VOLK)
 
@@ -28,5 +32,9 @@ target_compile_definitions(litenn_test_compile_options INTERFACE USE_VOLK)
 target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
 
 target_link_libraries(${MODULE_NAME}
+    ${MODULE_LIBS} litenn_test_compile_options 
+)
+
+target_link_libraries(hge
     ${MODULE_LIBS} litenn_test_compile_options 
 )

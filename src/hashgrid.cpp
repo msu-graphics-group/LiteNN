@@ -1,5 +1,7 @@
 #include "hashgrid.h"
-
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 namespace nn {
 
@@ -38,13 +40,13 @@ namespace nn {
         constexpr uint64_t PI_3 = 805'459'861;
 
 
-        uint64_t spatial_hash_3d(const float3 &vec) {
-            return (PI_1 * vec.x) ^ (PI_2 * vec.y) ^ (PI_3 * vec.z);
+        uint64_t spatial_hash_3d(uint32_t x, uint32_t y, uint32_t z) {
+            return (PI_1 * x) ^ (PI_2 * y) ^ (PI_3 * z);
         }
     }
 
 
-    void HashGridEncoding::forward(const float3 &vec, std::vector<float> &out_features) {
+    void HashGridEncoding::forward(const LiteMath::float3 &vec, std::vector<float> &out_features) {
 
         for(uint32_t layer_i = 0; layer_i < layers; ++layer_i) {
             uint32_t n = N[layer_i];
@@ -64,7 +66,7 @@ namespace nn {
                 z_int = n - 1;
             }
 
-            uint64_t hash = spatial_hash_3d(vec);
+            uint64_t hash = spatial_hash_3d(x_int, y_int, z_int);
             uint32_t feature_idx = hash % table_size;
 
             float *emb_ptr = embeddings.data() + layer_i * table_size * feature_dim + feature_idx * feature_dim;

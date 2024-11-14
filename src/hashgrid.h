@@ -2,9 +2,6 @@
 #define INCLUDE_LITENN_HASHGRID_H_
 #include <cstdint>
 #include <vector>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
 #include <LiteMath.h>
 
 
@@ -24,11 +21,11 @@ namespace nn
             bool verbose = false
         );
 
-        void forward(const float3 &vec, std::vector<float> &out_features);
+        void forward(const LiteMath::float3 &vec, std::vector<float> &out_features);
 
         void init_embeddings();
     private:
-        static const char *name = "HashGrid";
+        static constexpr char *name = "HashGrid";
 
         uint32_t layers;             // number of levels
         uint32_t table_size;             // max entries per level

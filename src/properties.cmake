@@ -12,6 +12,8 @@ set(MODULE_SOURCES
     neural_network.cpp
     tensor_token.cpp
     siren.cpp
+
+    hashgrid.cpp
 )
 
 set(MODULE_GENERATED_SOURCES
