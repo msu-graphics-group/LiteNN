@@ -305,6 +305,12 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       kernel3D_max_pool_3D_diff(memory.data(), steps, A.sizes[0]/window_x, A.sizes[1]/window_y, A.sizes[2]/window_z, window_x, window_y, window_z, A, B, C);
     }
       break;
+    case nn::TensorProgram::HASH_GRID:
+    {
+      unsigned steps = A.sizes[1];
+      kernel1D_hash_grid(memory.data(), steps, arg0, arg1, arg2, arg3, arg4, A, B, C);
+    }
+      break;
     default:
       break;
     }
@@ -1034,5 +1040,97 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
         }
       }
     }
+  }
+}
+
+
+void TensorProcessorImpl::kernel1D_hash_grid(float *data, int steps, int L, int T, int F, int N_min, unsigned bu, Variable A, Variable B, Variable C)
+{
+  constexpr unsigned PI_1 = 1;
+  constexpr unsigned PI_2 = 2'654'435'761;
+  constexpr unsigned PI_3 = 805'459'861;
+
+  auto get_i = [=](float val, unsigned N) {
+    unsigned v0 = floor(val * (N - 1));
+    unsigned v1 = ceil(val * (N - 1));
+    if      (v1 == 0)       v1 = 1;
+    else if (v0 == val - 1) v0 = N - 2;
+    return std::make_pair(v0, v1);
+  };
+
+  auto spacial_hash_grid = [=](unsigned x, unsigned y, unsigned z) {
+    return (PI_1 * x + PI_2 * y + PI_3 * z) % T;
+  };
+
+  int verbose = 1;
+  float b = *(float*)(&bu);
+  
+  if (verbose) {
+    printf("It's HASHGRIDIN TIME\n");
+    printf("b is %f\n", b);
+    printf("bu is %d\n", bu);
+    printf("L = %d, T = %d, F = %d\n", L, T, F);
+    printf("steps = %d\n", steps);
+    printf("A: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", A.total_size, A.offset, A.sizes[0], A.sizes[1], A.sizes[2], A.sizes[3]);
+    printf("B: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", B.total_size, B.offset, B.sizes[0], B.sizes[1], B.sizes[2], B.sizes[3]);
+    printf("C: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", C.total_size, C.offset, C.sizes[0], C.sizes[1], C.sizes[2], C.sizes[3]);
+  }
+  
+  #pragma omp parallel for
+  for (int step = 0; step < steps; ++step) {
+    if (verbose) printf("Batch %d\n", step);
+
+    float b_i = 1;
+    for (int layer_i = 0; layer_i < L; ++layer_i) {
+      if (verbose) printf("Layer %d\n", layer_i);
+      b_i *= b;
+      unsigned N = N_min * b_i;
+
+      float *input = (data + A.offset) + step * 3;
+      float *table = (data + B.offset) + layer_i * (T * F);
+      float *output = (data + C.offset) + step * L * F + layer_i * F;
+
+      float x = input[0];
+      float y = input[1];
+      float z = input[2];
+
+      const auto [x0, x1] = get_i(x, N);
+      const auto [y0, y1] = get_i(y, N);
+      const auto [z0, z1] = get_i(z, N);
+
+      const float wx = x - x0;
+      const float wy = y - y0;
+      const float wz = z - z0;
+
+      unsigned indices[8];
+      indices[0b000] = spacial_hash_grid(x0, y0, z0);
+      indices[0b001] = spacial_hash_grid(x0, y0, z1);
+      indices[0b010] = spacial_hash_grid(x0, y1, z0);
+      indices[0b011] = spacial_hash_grid(x0, y1, z1);
+      indices[0b100] = spacial_hash_grid(x1, y0, z0);
+      indices[0b101] = spacial_hash_grid(x1, y0, z1);
+      indices[0b110] = spacial_hash_grid(x1, y1, z0);
+      indices[0b111] = spacial_hash_grid(x1, y1, z1);
+
+      float weights[8];
+      weights[0b000] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
+      weights[0b001] = (1.0f - wx) * (1.0f - wy) * wz;
+      weights[0b010] = (1.0f - wx) * wy * (1.0f - wz);
+      weights[0b011] = (1.0f - wx) * wy * wz;
+      weights[0b100] = wx * (1.0f - wy) * (1.0f - wz);
+      weights[0b101] = wx * (1.0f - wy) * wz;
+      weights[0b110] = wx * wy * (1.0f - wz);
+      weights[0b111] = wx * wy * wz;
+
+      const uint32_t emb_layer_offset = layer_i * F * T;
+
+      std::fill_n(output, F, 0.0f);
+
+      for(int i = 0; i < 8; ++i) {
+        for(int j = 0; j < F; ++j) {
+          output[j] += weights[i] * (table[indices[i] + j]);
+        }
+      }
+    }    
   }
 }

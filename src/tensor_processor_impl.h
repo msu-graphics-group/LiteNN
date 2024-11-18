@@ -100,6 +100,7 @@ protected:
                                                               int window_x, int window_y, int window_z, Variable A, Variable B);
   virtual void __attribute__((noinline)) kernel3D_max_pool_3D_diff(float *data, int steps, int x_steps, int y_steps, int z_steps, 
                                                                    int window_x, int window_y, int window_z, Variable A, Variable B, Variable C); 
+  virtual void __attribute__((noinline)) kernel1D_hash_grid(float *data, int steps, int L, int T, int F, int N_min, unsigned b, Variable A, Variable B, Variable C);
 
 
   virtual void __attribute__((noinline)) kernel1D_set_input(const float* data_in, unsigned offset, unsigned a_size);

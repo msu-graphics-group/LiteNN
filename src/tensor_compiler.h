@@ -151,6 +151,11 @@ namespace nn
     static TensorToken mat_mul_t(const TensorToken &A, const TensorToken &B);
     static TensorToken conv2D(const TensorToken &A, const TensorToken &kernel, unsigned stride = 1);
     static TensorToken conv3D(const TensorToken &A, const TensorToken &kernel, unsigned stride = 1);
+    static TensorToken hash_grid(
+      const TensorToken &xyz, const TensorToken &weights, 
+      unsigned L, unsigned T, unsigned F, 
+      unsigned N_min, float b
+    );
 
     unsigned id = 0;
     unsigned Dim = 0;

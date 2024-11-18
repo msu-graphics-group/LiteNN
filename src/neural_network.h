@@ -532,6 +532,7 @@ namespace nn
   {
     unsigned L, T, F, N_min, N_max;
     std::vector<unsigned> N;
+    float b;
   public:
     HashGridLayer(unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
     {
@@ -542,7 +543,7 @@ namespace nn
       this->N_max = N_max;
 
       N.resize(L);
-      float b = std::exp(std::log(N_max / N_min) / (L - 1));
+      b = std::exp(std::log(N_max / N_min) / (L - 1));
       float b_i = 1.0f;
       for (unsigned i = 0; i < L; ++i, b_i *= b) {
         N[i] = N_min * b_i;
@@ -558,8 +559,7 @@ namespace nn
     }
     virtual int parameters_count() override { return L * T * F; };
     virtual TensorToken forward(const TensorToken &in) override {
-      return TensorToken(output_shape[0], 1u);
-      // return TensorToken::hashgrid(in, L, T, F, N);
+      return TensorToken::hash_grid(in, weights[0], L, T, F, N_min, b);
     }
     virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override {
       return TensorToken(1);

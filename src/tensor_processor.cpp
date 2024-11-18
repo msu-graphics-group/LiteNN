@@ -61,6 +61,7 @@ namespace nn
     {CONV_3D  , "CONV_3D"  , ALGEBRA       , SELF_APPLICABLE_NO },
     {MPOOL_3D ,  "MPOOL_3D", ALGEBRA       , SELF_APPLICABLE_NO },
     {MPOOL_3D_D, "MPOOL_3D_D", ALGEBRA       , SELF_APPLICABLE_NO },
+    {HASH_GRID, "HASH_GRID", ALGEBRA       , SELF_APPLICABLE_NO },
   };
 
   std::unique_ptr<TensorProcessor> proc;

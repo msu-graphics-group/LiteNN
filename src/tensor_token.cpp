@@ -624,4 +624,19 @@ namespace nn
     tp->add_command(TensorProgram::CONV_3D, A.id, kernel.id, res.id, stride);
     return res;
   }
+
+  TensorToken TensorToken::hash_grid(
+    const TensorToken &xyz, const TensorToken &weights,
+    unsigned L, unsigned T, unsigned F,
+    unsigned N_min, float b
+  ) {
+    assert(xyz.Dim == 2);
+    assert(weights.Dim == 3);
+    unsigned res_sizes[TensorProgram::MAX_DIM] = {F*L,xyz.sizes[1],0,0,0,0,0,0};
+    TensorToken res(res_sizes);
+
+    tp->add_command(TensorProgram::HASH_GRID, xyz.id, weights.id, res.id, L, T, F, N_min, *(unsigned *)(&b));
+
+    return res;
+  }
 }

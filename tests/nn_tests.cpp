@@ -1982,22 +1982,38 @@ void tp_test_1_tensor_processor()
   {
     printf("TEST 20. MULTIRESOLUTION HASHGRID\n");
 
-    int batch_size = 1;
+    int batch_size = 2;
+    int L = 3, T = 10, F = 3, N_min = 4, N_max = 64;
 
     NeuralNetwork nn2;
     nn2.set_batch_size_for_evaluate(batch_size);
-    nn2.add_layer(std::make_shared<HashGridLayer>(3, 10, 3, 4, 64));
-    nn2.add_layer(std::make_shared<DenseLayer>( 3 * 3, 1));
+    nn2.add_layer(std::make_shared<HashGridLayer>(L, T, F, N_min, N_max));
+    // nn2.add_layer(std::make_shared<DenseLayer>( 3 * 3, 1));
 
     std::vector<float> inp(batch_size * 3, 0);
-    std::vector<float> outp(batch_size, 0);
+    std::vector<float> outp(batch_size * (L * F), 0);
 
-    nn2.train(inp.data(), outp.data(), 1, 1, 1, false, OptimizerAdam(0.01f), Loss::MSE, Metric::MAE);
+    for (int i=0;i<batch_size;i++)
+    {
+      inp[i*3 + 0] = i;
+      inp[i*3 + 1] = i;
+      inp[i*3 + 2] = i;
+    }
+
+    auto w = std::vector<float>(L * T * F, 0.0f);
+    nn2.initialize_with_weights(w.data());
+
+    // nn2.train(inp.data(), outp.data(), batch_size, batch_size, 1, false, OptimizerAdam(0.01f), Loss::MSE, Metric::MAE);
 
     nn2.evaluate(inp, outp);
 
-    for (int i=0;i<outp.size();i++)
-      printf("%f\n", outp[i]);
+    for (int i=0; i<outp.size(); i += (L * F)) {
+      printf("Batch %2d:   ", i / (L * F));
+      for (int j = i; j < i + (L * F); j++) {
+        printf("%3.2f    ", outp[j]);
+      }
+      printf("\n");
+    }
   }
 
   void perform_tests_tensor_processor(const std::vector<int> &test_ids)
