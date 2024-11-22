@@ -156,6 +156,11 @@ namespace nn
       unsigned L, unsigned T, unsigned F, 
       unsigned N_min, float b
     );
+    static TensorToken hash_grid_coefs(
+      const TensorToken &xyz, 
+      unsigned L, unsigned T, unsigned F, 
+      unsigned N_min, float b
+    );
 
     unsigned id = 0;
     unsigned Dim = 0;

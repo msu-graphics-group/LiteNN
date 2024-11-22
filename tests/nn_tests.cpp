@@ -23,6 +23,11 @@
 
 #include <stb_image_write.h>
 
+#include <iostream>
+#include <fstream>
+using std::cin, std::cout, std::endl;
+
+
 namespace nn
 {
   static const std::string TEST_IMAGE = "resources/1a.png";
@@ -1978,42 +1983,106 @@ void tp_test_1_tensor_processor()
       printf("FAILED, error rate %f\n", error_rate);
   }
 
+  std::vector<float> read_data(const std::string &path, unsigned size)
+  {
+    std::ifstream f(path, std::ios::binary);
+    std::vector<float> data(size);
+    f.read((char*)data.data(), size*sizeof(float));
+    return data;
+  }
+
   void nn_test_20_hashgrid()
   {
     printf("TEST 20. MULTIRESOLUTION HASHGRID\n");
 
-    int batch_size = 2;
+    int batch_size = 50'000;
+    unsigned img_size = 800 * 800;
     int L = 3, T = 10, F = 3, N_min = 4, N_max = 64;
 
     NeuralNetwork nn2;
+    // nn2.add_layer(std::make_shared<HashGridCoefsLayer>(L, T, F, N_min, N_max));
+    // nn2.add_layer(std::make_shared<DenseLayer>(L * T * F, L * F));
+    unsigned dim = 256;
+    nn2.add_layer(std::make_shared<DenseLayer>(6, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, 2), Initializer::He);
+    nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+    unsigned train_size = 100 * img_size;
+    std::vector<float> rays_train = read_data("/home/alehandreus/E/Graphics/WREX/SHEPARD/GRUNT/rays_train.bin", train_size * 6);
+    std::vector<float> dists_train = read_data("/home/alehandreus/E/Graphics/WREX/SHEPARD/GRUNT/dists_train.bin", train_size);
+    std::vector<float> mask_train(train_size, 0);
+    for (int i = 0; i < train_size; i++) mask_train[i] = (dists_train[i] == 0.0) ? 0.0 : 1.0;
+    cout << rays_train.size() << " " << dists_train.size() << endl;
+    mask_train.resize(train_size * 2);
+    for (int i = train_size - 1; i >= 0; --i) {
+      mask_train[i * 2] = mask_train[i];
+      mask_train[i * 2 + 1] = 1 - mask_train[i];
+    }
+
+    unsigned val_size = 100 * img_size;
+    std::vector<float> rays_val = read_data("/home/alehandreus/E/Graphics/WREX/SHEPARD/GRUNT/rays_val.bin", val_size * 6);
+    std::vector<float> dists_val = read_data("/home/alehandreus/E/Graphics/WREX/SHEPARD/GRUNT/dists_val.bin", val_size);
+    std::vector<float> mask_val(val_size, 0);
+    for (int i = 0; i < val_size; i++) mask_val[i] = (dists_val[i] == 0.0) ? 0.0 : 1.0;
+    cout << rays_val.size() << " " << dists_val.size() << endl;
+    mask_val.resize(val_size * 2);
+    for (int i = val_size - 1; i >= 0; --i) {
+      mask_val[i * 2] = mask_val[i];
+      mask_val[i * 2 + 1] = 1 - mask_val[i];
+    }
+
+    unsigned idx = 80;
+    std::vector<unsigned char> img(img_size, 0);
+    // float min = 1e-9, max = -1e9;
+    // for (int i = 0; i < img_size; i++) {
+    //   if (dists_val[i + idx * img_size] == 0) continue;
+    //   min = std::min(min, dists_val[i + idx * img_size]);
+    //   max = std::max(max, dists_val[i + idx * img_size]);
+    // }
+    for (int i = 0; i < img_size; i++) {
+      // if (dists_val[i + idx * img_size] == 0) continue;
+      // img[i] = (dists_val[i + idx * img_size] - min) / (max - min) * 255;
+      img[i] = mask_val[80 * img_size + i * 2] * 255;
+    }      
+    stbi_write_png("img.png", 800, 800, 1, img.data(), 800);
+
     nn2.set_batch_size_for_evaluate(batch_size);
-    nn2.add_layer(std::make_shared<HashGridLayer>(L, T, F, N_min, N_max));
-    // nn2.add_layer(std::make_shared<DenseLayer>( 3 * 3, 1));
+    nn2.train(
+      rays_train.data(),
+      mask_train.data(),
+      train_size, batch_size, 1,
+      false,
+      OptimizerAdam(0.001f),
+      Loss::CrossEntropy, Metric::Accuracy,
+      true
+    );
 
-    std::vector<float> inp(batch_size * 3, 0);
-    std::vector<float> outp(batch_size * (L * F), 0);
+    cout << "TRAIN FINISHED" << endl;
 
-    for (int i=0;i<batch_size;i++)
-    {
-      inp[i*3 + 0] = i;
-      inp[i*3 + 1] = i;
-      inp[i*3 + 2] = i;
-    }
+    std::vector<float> val_subset(rays_val.begin() + 80 * img_size * 6, rays_val.begin() + 81 * img_size * 6);
+    std::vector<float> pred(img_size * 2, 0);
+    nn2.evaluate(val_subset, pred, img_size);
 
-    auto w = std::vector<float>(L * T * F, 0.0f);
-    nn2.initialize_with_weights(w.data());
+    for (int i = 0; i < img_size; i++) {
+      // img[i] = (pred[i] > 0.5) ? 255 : 0;
+      img[i] = (pred[i * 2] > 0.5) * 255;
+    }      
+    stbi_write_png("img2.png", 800, 800, 1, img.data(), 800);
 
-    // nn2.train(inp.data(), outp.data(), batch_size, batch_size, 1, false, OptimizerAdam(0.01f), Loss::MSE, Metric::MAE);
-
-    nn2.evaluate(inp, outp);
-
-    for (int i=0; i<outp.size(); i += (L * F)) {
-      printf("Batch %2d:   ", i / (L * F));
-      for (int j = i; j < i + (L * F); j++) {
-        printf("%3.2f    ", outp[j]);
-      }
-      printf("\n");
-    }
+    cout << "EVAL FINISHED" << endl;
   }
 
   void perform_tests_tensor_processor(const std::vector<int> &test_ids)

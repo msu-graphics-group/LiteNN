@@ -567,6 +567,44 @@ namespace nn
     virtual std::string get_name() override { return "HashGrid"; }
   };
 
+  class HashGridCoefsLayer : public Layer
+  {
+    unsigned L, T, F, N_min, N_max;
+    std::vector<unsigned> N;
+    float b;
+  public:
+    HashGridCoefsLayer(unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
+    {
+      this->L = L;
+      this->T = T;
+      this->F = F;
+      this->N_min = N_min;
+      this->N_max = N_max;
+
+      N.resize(L);
+      b = std::exp(std::log(N_max / N_min) / (L - 1));
+      float b_i = 1.0f;
+      for (unsigned i = 0; i < L; ++i, b_i *= b) {
+        N[i] = N_min * b_i;
+      }
+    
+      input_shape.push_back(3);
+      output_shape.push_back(L * T * F);
+    }
+    virtual void init() override {
+      weights.clear();
+    }
+    virtual int parameters_count() override { return 0; };
+    virtual TensorToken forward(const TensorToken &in) override {
+      auto a = TensorToken::hash_grid_coefs(in, L, T, F, N_min, b);
+      return TensorToken::hash_grid_coefs(in, L, T, F, N_min, b);
+    }
+    virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override {
+      return TensorToken(1);
+    }
+    virtual std::string get_name() override { return "HashGridCoefs"; }
+  };
+
   struct OptimizerGD
   {
     explicit OptimizerGD(float _lr = 0.01) { learning_rate = _lr; }
