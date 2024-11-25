@@ -625,31 +625,16 @@ namespace nn
     return res;
   }
 
-  TensorToken TensorToken::hash_grid(
-    const TensorToken &xyz, const TensorToken &weights,
-    unsigned L, unsigned T, unsigned F,
-    unsigned N_min, float b
-  ) {
-    assert(xyz.Dim == 2);
-    assert(weights.Dim == 3);
-    unsigned res_sizes[TensorProgram::MAX_DIM] = {F*L,xyz.sizes[1],0,0,0,0,0,0};
-    TensorToken res(res_sizes);
-
-    tp->add_command(TensorProgram::HASH_GRID, xyz.id, weights.id, res.id, L, T, F, N_min, *(unsigned *)(&b));
-
-    return res;
-  }
-
-  TensorToken TensorToken::hash_grid_coefs(
+  TensorToken TensorToken::hash_grid_3D(
     const TensorToken &xyz,
-    unsigned L, unsigned T, unsigned F,
-    unsigned N_min, float b
+    unsigned T, unsigned F,
+    unsigned N
   ) {
     assert(xyz.Dim == 2);
-    unsigned res_sizes[TensorProgram::MAX_DIM] = {L*T*F,xyz.sizes[1],0,0,0,0,0,0};
+    unsigned res_sizes[TensorProgram::MAX_DIM] = {T,xyz.sizes[1],0,0,0,0,0,0};
     TensorToken res(res_sizes);
 
-    // tp->add_command(TensorProgram::HASH_GRID_COEFS, xyz.id, 0, res.id, L, T, F, N_min, *(unsigned *)(&b));
+    tp->add_command(TensorProgram::HASH_GRID_3D, xyz.id, 0, res.id, T, F, N);
 
     return res;
   }

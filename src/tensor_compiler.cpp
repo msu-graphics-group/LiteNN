@@ -744,7 +744,7 @@ namespace nn
 
   TensorProgram TensorCompiler::finish_program(bool print_program)
   {
-    optimize_program();
+    // optimize_program();
     unsigned total_memory_req = calculate_memory_layout_interval_coloring();
 
     TensorProgram pr;

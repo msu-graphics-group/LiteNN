@@ -528,13 +528,13 @@ namespace nn
     virtual std::string get_name() override { return "Dropout"; }
   };
 
-  class HashGridLayer : public Layer
+  class HashGrid3DLayer : public Layer
   {
     unsigned L, T, F, N_min, N_max;
     std::vector<unsigned> N;
     float b;
   public:
-    HashGridLayer(unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
+    HashGrid3DLayer(unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
     {
       this->L = L;
       this->T = T;
@@ -554,53 +554,44 @@ namespace nn
     }
     virtual void init() override {
       weights.clear();
-      weights.push_back(TensorToken(L, T, F));
+      for (int i = 0; i < L; i++) {
+        weights.push_back(TensorToken(F, T));
+      }
       dLoss_dWeights.resize(weights.size());
     }
     virtual int parameters_count() override { return L * T * F; };
     virtual TensorToken forward(const TensorToken &in) override {
-      return TensorToken::hash_grid(in, weights[0], L, T, F, N_min, b);
-    }
-    virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override {
-      return TensorToken(1);
-    }
-    virtual std::string get_name() override { return "HashGrid"; }
-  };
+      unsigned batch_size = in.sizes[1];
+      TensorToken dummy;
 
-  class HashGridCoefsLayer : public Layer
-  {
-    unsigned L, T, F, N_min, N_max;
-    std::vector<unsigned> N;
-    float b;
-  public:
-    HashGridCoefsLayer(unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
-    {
-      this->L = L;
-      this->T = T;
-      this->F = F;
-      this->N_min = N_min;
-      this->N_max = N_max;
-
-      N.resize(L);
-      b = std::exp(std::log(N_max / N_min) / (L - 1));
-      float b_i = 1.0f;
-      for (unsigned i = 0; i < L; ++i, b_i *= b) {
-        N[i] = N_min * b_i;
+      TensorToken out(L * F, batch_size);
+      for (int i = 0; i < L; ++i) {
+        TensorToken a = TensorToken::hash_grid_3D(in, T, F, N[i]);
+        TensorToken b = TensorToken::mat_mul_t(a, weights[i].transpose());
+        TensorToken::issue_command(TensorProgram::COPY_STRIDE, b, dummy, out, batch_size, F, L * F, i);
       }
-    
-      input_shape.push_back(3);
-      output_shape.push_back(L * T * F);
-    }
-    virtual void init() override {
-      weights.clear();
-    }
-    virtual int parameters_count() override { return 0; };
-    virtual TensorToken forward(const TensorToken &in) override {
-      auto a = TensorToken::hash_grid_coefs(in, L, T, F, N_min, b);
-      return TensorToken::hash_grid_coefs(in, L, T, F, N_min, b);
+      return out;
     }
     virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override {
-      return TensorToken(1);
+      float batch_size = (float)(input.sizes[1]);
+      TensorToken dummy;
+
+      for (int i = 0; i < L; ++i) {
+        TensorToken a = TensorToken::hash_grid_3D(input, T, F, N[i]);
+        TensorToken dLoss_dOutput_sub(F, batch_size);
+        // printf("dLoss_dOutput size: %d %d %d\n", dLoss_dOutput.sizes[0], dLoss_dOutput.sizes[1], dLoss_dOutput.sizes[2]);
+        TensorToken::issue_command(
+          TensorProgram::COPY_STRIDE, 
+          dLoss_dOutput, dummy, dLoss_dOutput_sub,
+          batch_size, L * F, F, i
+        );
+        dLoss_dWeights[i] = TensorToken::mat_mul_t(
+          a.transpose(),
+          dLoss_dOutput_sub.transpose()
+        ) / batch_size;
+      }      
+
+      return TensorToken();
     }
     virtual std::string get_name() override { return "HashGridCoefs"; }
   };

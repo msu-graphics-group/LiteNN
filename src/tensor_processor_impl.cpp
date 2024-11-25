@@ -159,6 +159,9 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
     case nn::TensorProgram::COPY:
       kernel1D_copy(memory.data(), arg2, arg0, arg1, A, C);
       break;
+    case nn::TensorProgram::COPY_STRIDE:
+      kernel1D_copy_stride(memory.data(), arg0, arg1, arg2, arg3, A, C);
+      break;
     case nn::TensorProgram::TRANSP:
     {
       unsigned transp_dim = arg0;
@@ -305,16 +308,11 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       kernel3D_max_pool_3D_diff(memory.data(), steps, A.sizes[0]/window_x, A.sizes[1]/window_y, A.sizes[2]/window_z, window_x, window_y, window_z, A, B, C);
     }
       break;
-    case nn::TensorProgram::HASH_GRID:
+    case nn::TensorProgram::HASH_GRID_3D:
     {
       unsigned steps = A.sizes[1];
-      // kernel1D_hash_grid(memory.data(), steps, arg0, arg1, arg2, arg3, arg4, A, B, C);
-    }
-      break;
-    case nn::TensorProgram::HASH_GRID_COEFS:
-    {
-      unsigned steps = A.sizes[1];
-      // kernel1D_hash_grid_coefs(memory.data(), steps, arg0, arg1, arg2, arg3, arg4, A, C);
+      float b = *(float*)(&arg4);
+      kernel1D_hash_grid_3D(memory.data(), steps, arg0, arg1, arg2, b, A, C);
     }
       break;
     default:
@@ -387,6 +385,23 @@ void TensorProcessorImpl::kernel1D_copy(float *data, unsigned steps, unsigned fr
   for (unsigned i = 0; i < steps; i++) 
     data[B.offset + to + i] = 1.0f*data[A.offset + from + i];
 }
+
+void TensorProcessorImpl::kernel1D_copy_stride(float *data, unsigned steps, unsigned A_size, unsigned B_size, unsigned iter, Variable A, Variable B)
+{
+  #pragma omp parallel for
+  for (unsigned i = 0; i < steps; ++i) {
+    if (B_size > A_size) {
+      for (unsigned j = 0; j < A_size; ++j) {
+        data[B.offset + i * B_size + iter * A_size + j] = data[A.offset + i * A_size + j];
+      }
+    } else {
+      for (unsigned j = 0; j < B_size; ++j) {
+        data[B.offset + i * B_size + j] = data[A.offset + i * A_size + iter * A_size + j];
+      }
+    }
+  }
+}
+
 void TensorProcessorImpl::kernel1D_fill(float *data, unsigned steps, Variable A, float val)
 {
   for (unsigned i = 0; i < steps; i++) 
@@ -1052,170 +1067,80 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
 
 // void TensorProcessorImpl::kernel1D_hash_grid(float *data, int steps, int L, int T, int F, int N_min, unsigned bu, Variable A, Variable B, Variable C)
 // {
-//   // constexpr unsigned PI_1 = 1;
-//   // constexpr unsigned PI_2 = 2'654'435'761;
-//   // constexpr unsigned PI_3 = 805'459'861;
 
-//   // auto get_i = [=](float val, unsigned N) {
-//   //   unsigned v0 = floor(val * (N - 1));
-//   //   unsigned v1 = ceil(val * (N - 1));
-//   //   if      (v1 == 0)       v1 = 1;
-//   //   else if (v0 == val - 1) v0 = N - 2;
-//   //   return std::make_pair(v0, v1);
-//   // };
-
-//   // auto spacial_hash_grid = [=](unsigned x, unsigned y, unsigned z) {
-//   //   return (PI_1 * x + PI_2 * y + PI_3 * z) % T;
-//   // };
-
-//   // int verbose = 1;
-//   // float b = *(float*)(&bu);
-  
-//   // #pragma omp parallel for
-//   // for (int step = 0; step < steps; ++step) {
-
-//   //   float b_i = 1;
-//   //   for (int layer_i = 0; layer_i < L; ++layer_i) {
-//   //     b_i *= b;
-//   //     unsigned N = N_min * b_i;
-
-//   //     float *input = (data + A.offset) + step * 3;
-//   //     float *table = (data + B.offset) + layer_i * (T * F);
-//   //     float *output = (data + C.offset) + step * L * F + layer_i * F;
-
-//   //     float x = input[0];
-//   //     float y = input[1];
-//   //     float z = input[2];
-
-//   //     const auto [x0, x1] = get_i(x, N);
-//   //     const auto [y0, y1] = get_i(y, N);
-//   //     const auto [z0, z1] = get_i(z, N);
-
-//   //     const float wx = x - x0;
-//   //     const float wy = y - y0;
-//   //     const float wz = z - z0;
-
-//   //     unsigned indices[8];
-//   //     indices[0b000] = spacial_hash_grid(x0, y0, z0);
-//   //     indices[0b001] = spacial_hash_grid(x0, y0, z1);
-//   //     indices[0b010] = spacial_hash_grid(x0, y1, z0);
-//   //     indices[0b011] = spacial_hash_grid(x0, y1, z1);
-//   //     indices[0b100] = spacial_hash_grid(x1, y0, z0);
-//   //     indices[0b101] = spacial_hash_grid(x1, y0, z1);
-//   //     indices[0b110] = spacial_hash_grid(x1, y1, z0);
-//   //     indices[0b111] = spacial_hash_grid(x1, y1, z1);
-
-//   //     float weights[8];
-//   //     weights[0b000] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
-//   //     weights[0b001] = (1.0f - wx) * (1.0f - wy) * wz;
-//   //     weights[0b010] = (1.0f - wx) * wy * (1.0f - wz);
-//   //     weights[0b011] = (1.0f - wx) * wy * wz;
-//   //     weights[0b100] = wx * (1.0f - wy) * (1.0f - wz);
-//   //     weights[0b101] = wx * (1.0f - wy) * wz;
-//   //     weights[0b110] = wx * wy * (1.0f - wz);
-//   //     weights[0b111] = wx * wy * wz;
-
-//   //     const uint32_t emb_layer_offset = layer_i * F * T;
-
-//   //     std::fill_n(output, F, 0.0f);
-
-//   //     for(int i = 0; i < 8; ++i) {
-//   //       for(int j = 0; j < F; ++j) {
-//   //         output[j] += weights[i] * (table[indices[i] + j]);
-//   //       }
-//   //     }
-//   //   }    
-//   // }
 // }
 
 
-// void TensorProcessorImpl::kernel1D_hash_grid_coefs(float *data, int steps, int L, int T, int F, int N_min, unsigned bu, Variable A, Variable C)
-// {
-//   // constexpr unsigned PI_1 = 1;
-//   // constexpr unsigned PI_2 = 2'654'435'761;
-//   // constexpr unsigned PI_3 = 805'459'861;
+#define PI_1 1
+#define PI_2 2654435761u
+#define PI_3 805459861
 
-//   // auto get_i = [=](float val, unsigned N) {
-//   //   unsigned v0 = floor(val * (N - 1));
-//   //   unsigned v1 = ceil(val * (N - 1));
-//   //   if      (v1 == 0)       v1 = 1;
-//   //   else if (v0 == val - 1) v0 = N - 2;
-//   //   return std::make_pair(v0, v1);
-//   // };
+void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, float b, Variable A, Variable C)
+{
+  #pragma omp parallel for
+  for (int step = 0; step < steps; ++step) {
+    float b_i = 1;
+    b_i *= b;
 
-//   // auto spacial_hash_grid = [=](unsigned x, unsigned y, unsigned z) {
-//   //   return (PI_1 * x + PI_2 * y + PI_3 * z) % T;
-//   // };
+    float x = data[A.offset + step * 3 + 0];
+    float y = data[A.offset + step * 3 + 1];
+    float z = data[A.offset + step * 3 + 2];
 
-//   // int verbose = 1;
-//   // float b = *(float*)(&bu);
-  
-//   // if (verbose) {
-//   //   printf("It's HASHGRIDIN TIME\n");
-//   //   printf("b is %f\n", b);
-//   //   printf("bu is %d\n", bu);
-//   //   printf("L = %d, T = %d, F = %d\n", L, T, F);
-//   //   printf("steps = %d\n", steps);
-//   //   printf("A: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", A.total_size, A.offset, A.sizes[0], A.sizes[1], A.sizes[2], A.sizes[3]);
-//   //   printf("B: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", B.total_size, B.offset, B.sizes[0], B.sizes[1], B.sizes[2], B.sizes[3]);
-//   //   printf("C: total_size = %d, offset = %d, shape = (%d, %d, %d, %d)\n", C.total_size, C.offset, C.sizes[0], C.sizes[1], C.sizes[2], C.sizes[3]);
-//   // }
-  
-//   // #pragma omp parallel for
-//   // for (int step = 0; step < steps; ++step) {
-//   //   if (verbose) printf("Batch %d\n", step);
+    /* ======================= */ 
 
-//   //   float b_i = 1;
-//   //   for (int layer_i = 0; layer_i < L; ++layer_i) {
-//   //     if (verbose) printf("Layer %d\n", layer_i);
-//   //     b_i *= b;
-//   //     unsigned N = N_min * b_i;
+    uint32_t x0 = (uint32_t)(x * (N - 1));
+    uint32_t x1 = (uint32_t)(x * (N - 1) + 1);
+    if      (x0 <= 0)     x0 = 1;
+    else if (x1 >= x - 1) x1 = N - 2;
 
-//   //     float *input = (data + A.offset) + step * 3;
-//   //     float *table = (data + B.offset) + layer_i * (T * F);
-//   //     float *output = (data + C.offset) + step * L * F + layer_i * F;
+    uint32_t y0 = (uint32_t)(y * (N - 1));
+    uint32_t y1 = (uint32_t)(y * (N - 1) + 1);
+    if      (y0 <= 0)     y0 = 1;
+    else if (y1 >= y - 1) y1 = N - 2;
 
-//   //     float x = input[0];
-//   //     float y = input[1];
-//   //     float z = input[2];
+    uint32_t z0 = (uint32_t)(z * (N - 1));
+    uint32_t z1 = (uint32_t)(z * (N - 1) + 1);
+    if      (z0 <= 0)     z0 = 1;
+    else if (z1 >= z - 1) z1 = N - 2;
 
-//   //     const auto [x0, x1] = get_i(x, N);
-//   //     const auto [y0, y1] = get_i(y, N);
-//   //     const auto [z0, z1] = get_i(z, N);
+    /* ======================= */ 
 
-//   //     const float wx = x - x0;
-//   //     const float wy = y - y0;
-//   //     const float wz = z - z0;
+    float wx = x * (N - 1) - x0;
+    float wy = y * (N - 1) - y0;
+    float wz = z * (N - 1) - z0;
 
-//   //     unsigned indices[8];
-//   //     indices[0b000] = spacial_hash_grid(x0, y0, z0);
-//   //     indices[0b001] = spacial_hash_grid(x0, y0, z1);
-//   //     indices[0b010] = spacial_hash_grid(x0, y1, z0);
-//   //     indices[0b011] = spacial_hash_grid(x0, y1, z1);
-//   //     indices[0b100] = spacial_hash_grid(x1, y0, z0);
-//   //     indices[0b101] = spacial_hash_grid(x1, y0, z1);
-//   //     indices[0b110] = spacial_hash_grid(x1, y1, z0);
-//   //     indices[0b111] = spacial_hash_grid(x1, y1, z1);
+    /* ======================= */ 
 
-//   //     float weights[8];
-//   //     weights[0b000] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
-//   //     weights[0b001] = (1.0f - wx) * (1.0f - wy) * wz;
-//   //     weights[0b010] = (1.0f - wx) * wy * (1.0f - wz);
-//   //     weights[0b011] = (1.0f - wx) * wy * wz;
-//   //     weights[0b100] = wx * (1.0f - wy) * (1.0f - wz);
-//   //     weights[0b101] = wx * (1.0f - wy) * wz;
-//   //     weights[0b110] = wx * wy * (1.0f - wz);
-//   //     weights[0b111] = wx * wy * wz;
+    uint32_t indices[8];
+    indices[0] = (x0 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[1] = (x0 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[2] = (x0 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[3] = (x0 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+    indices[4] = (x1 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[5] = (x1 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[6] = (x1 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[7] = (x1 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
 
-//   //     const uint32_t emb_layer_offset = layer_i * F * T;
+    /* ======================= */ 
 
-//   //     std::fill_n(output, F, 0.0f);
+    float weights[8];
+    weights[0] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
+    weights[1] = (1.0f - wx) * (1.0f - wy) * wz;
+    weights[2] = (1.0f - wx) * wy * (1.0f - wz);
+    weights[3] = (1.0f - wx) * wy * wz;
+    weights[4] = wx * (1.0f - wy) * (1.0f - wz);
+    weights[5] = wx * (1.0f - wy) * wz;
+    weights[6] = wx * wy * (1.0f - wz);
+    weights[7] = wx * wy * wz;
 
-//   //     for(int i = 0; i < 8; ++i) {
-//   //       for(int j = 0; j < F; ++j) {
-//   //         output[j] += weights[i] * (table[indices[i] + j]);
-//   //       }
-//   //     }
-//   //   }    
-//   // }
-// }
+    /* ======================= */ 
+
+    for (int i = 0; i < T; ++i) {
+      data[C.offset + step * T + i] = 0;
+    }
+
+    for(int i = 0; i < 8; ++i) {
+      data[C.offset + step * T + indices[i]] += weights[i];
+    }
+  }
+}
