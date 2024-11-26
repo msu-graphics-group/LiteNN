@@ -333,6 +333,37 @@ namespace nn
     virtual std::string get_name() override { return "Sigmoid"; }
   };
 
+
+  class PartialSigmoidLayer : public Layer
+  {
+  public:
+    PartialSigmoidLayer(){ }
+    virtual void init() override { };
+    virtual int parameters_count() override { return 0; };
+    virtual TensorToken forward(const TensorToken &input) override
+    {
+      TensorToken t_input = input.transpose();
+      //std::cout << transposed.sizes[0] << std::endl;
+      TensorToken one(t_input.sizes);
+      one.fill(1.0f);
+      TensorToken t_sigmoid = one/(1.0f + TensorToken::exp(-1.0f*t_input));
+      //t_input.fill(0.f);
+      t_input.set(0, t_sigmoid.get(0));
+      
+      return t_input.transpose(); //sigmoid(x)
+    }
+    virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override
+    {
+      //output = sigmoid(x)
+      //dsigmoid(x) = sigmoid(x)*(1-sigmoid(x))
+      TensorToken t_output = output.transpose();
+      TensorToken t_sigmoid = t_output.get(0);
+      t_output.set(0, (t_sigmoid*(1.0f - t_sigmoid)));
+      return dLoss_dOutput*t_output.transpose();
+    }
+    virtual std::string get_name() override { return "PartialSigmoid"; }
+  };
+
   class MaxPoolingLayer : public Layer
   {
     unsigned window_size = 2;
@@ -584,7 +615,8 @@ namespace nn
   enum class Loss
   {
     MSE,
-    CrossEntropy
+    CrossEntropy,
+    NBVH
   };
   enum class Initializer
   {

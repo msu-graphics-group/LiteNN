@@ -336,6 +336,22 @@ namespace nn
       l = (mo * TensorToken::log(output + 1e-15f)).sum()/(float)(batch_size);
       dLoss_dOutput = mo / (output + 1e-15f);
     }
+    else if (loss == Loss::NBVH)
+    {
+      TensorToken t_target_output = target_output.transpose();
+      TensorToken t_output = output.transpose();
+      dLoss_dOutput = TensorToken(output.sizes).transpose();
+      dLoss_dOutput.fill(0.f);
+      // classification part (binary cross entropy)
+      TensorToken cl_target = t_target_output.get(0);
+      TensorToken cl_output = t_output.get(0);
+      l = (-1.0f * (cl_target * TensorToken::log(cl_output + 1e-15f) + (1.0f - cl_target) * TensorToken::log(1.0f - cl_output + 1e-15f))).sum()/(float)(batch_size);;
+      dLoss_dOutput.set(0, -1.0f * cl_target / (cl_output + 1e-15f) + (1.0f - cl_target) / (1.0f - cl_output + 1e-15f));
+      // other parts
+      // work in progress...
+      // final transforms
+      dLoss_dOutput = dLoss_dOutput.transpose();
+    }
 
     for (int i=layers.size()-1;i>0;i--)
       dLoss_dOutput = layers[i]->backward(all_outputs[i-1], all_outputs[i], dLoss_dOutput);
