@@ -349,9 +349,17 @@ namespace nn
       dLoss_dOutput.set(0, -1.0f * cl_target / (cl_output + 1e-15f) + (1.0f - cl_target) / (1.0f - cl_output + 1e-15f));
       // other parts
       // mse loss
+      /*
       TensorToken t_diff = t_output.get({1, 4}) - t_target_output.get({1, 4});
       l += (t_diff*t_diff).sum()/(float)(t_diff.total_size());
       dLoss_dOutput.set({1, 4}, 2.0f*t_diff);
+      */
+      // l1 loss
+      TensorToken t_diff = t_output.get({1, 4}) - t_target_output.get({1, 4});
+      TensorToken ones(t_diff.sizes);
+      ones.fill(1.0f);
+      l += TensorToken::sqrt(t_diff*t_diff).sum()/(float)(t_diff.total_size()); // TO DO TensorToken.abs()
+      dLoss_dOutput.set({1, 4}, TensorToken::g_2op(TensorProgram::WHERE, t_diff, ones) + TensorToken::g_2op(TensorProgram::WHERE, -1.0f * t_diff, -1.0f * ones));
 
       // final transforms
       dLoss_dOutput = dLoss_dOutput.transpose();

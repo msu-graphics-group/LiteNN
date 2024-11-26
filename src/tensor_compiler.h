@@ -15,7 +15,7 @@ namespace nn
     friend struct TensorToken;
 
     void start_program();
-    TensorProgram finish_program(bool print_program = true);
+    TensorProgram finish_program(bool print_program = false);
     void input(const TensorToken &t, std::string name);
     void output(const TensorToken &t, std::string name);
     void inout(const TensorToken &t, std::string name);
