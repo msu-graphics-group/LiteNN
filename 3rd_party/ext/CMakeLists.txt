@@ -7,6 +7,9 @@ target_compile_options(litenn_ext_compile_options INTERFACE -m64)
 target_compile_definitions(litenn_ext_compile_options INTERFACE USE_GPU)
 target_compile_definitions(litenn_ext_compile_options INTERFACE USE_VOLK)
 
+include(properties.cmake)
+
+
 #FETCHING LIBRARIES START
 include(FetchContent)
 
@@ -34,11 +37,6 @@ if(LITENN_ENABLE_VULKAN)
 
 #FETCHING LIBRARIES END
 
-
-
-    include(properties.cmake)
-
-
     add_library(${MODULE_NAME}
         ${MODULE_SOURCES}
     )
@@ -50,4 +48,19 @@ if(LITENN_ENABLE_VULKAN)
         ${MODULE_LIBS}
         PRIVATE litenn_ext_compile_options 
     )
+
+
+else()
+    add_library(${MODULE_NAME} INTERFACE)
+
+   # target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=unused-variable)
+
+    target_link_libraries(${MODULE_NAME} 
+        INTERFACE
+        ${MODULE_LIBS}
+    #    PRIVATE litenn_ext_compile_options 
+    )
+
+
 endif()
+

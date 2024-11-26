@@ -2,11 +2,10 @@ set(MODULE_NAME litenn_ext)
 
 
 set(MODULE_SOURCES
-
 )
 
 set(MODULE_LIBS
-
+    LiteMath
 )
 
 
@@ -26,6 +25,6 @@ if(LITENN_ENABLE_VULKAN)
     )
     
     set(MODULE_LIBS ${MODULE_LIBS}
-        Vulkan::Vulkan volk
+        Vulkan::Vulkan volk 
     )
 endif()
