@@ -348,7 +348,11 @@ namespace nn
       l = (-1.0f * (cl_target * TensorToken::log(cl_output + 1e-15f) + (1.0f - cl_target) * TensorToken::log(1.0f - cl_output + 1e-15f))).sum()/(float)(batch_size);;
       dLoss_dOutput.set(0, -1.0f * cl_target / (cl_output + 1e-15f) + (1.0f - cl_target) / (1.0f - cl_output + 1e-15f));
       // other parts
-      // work in progress...
+      // mse loss
+      TensorToken t_diff = t_output.get({1, 4}) - t_target_output.get({1, 4});
+      l += (t_diff*t_diff).sum()/(float)(t_diff.total_size());
+      dLoss_dOutput.set({1, 4}, 2.0f*t_diff);
+
       // final transforms
       dLoss_dOutput = dLoss_dOutput.transpose();
     }
