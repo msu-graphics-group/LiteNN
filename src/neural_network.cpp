@@ -342,30 +342,35 @@ namespace nn
       TensorToken t_output = output.transpose();
       dLoss_dOutput = TensorToken(output.sizes).transpose();
       dLoss_dOutput.fill(0.f);
-      // classification (binary cross entropy, size = 1)
+      // classification (binary cross entropy loss, size = 1)
       TensorToken cl_target = t_target_output.get(0);
       TensorToken cl_output = t_output.get(0);
       l = (-1.0f * (cl_target * TensorToken::log(cl_output + 1e-15f) + (1.0f - cl_target) * TensorToken::log(1.0f - cl_output + 1e-15f))).sum()/(float)(batch_size);;
       dLoss_dOutput.set(0, -1.0f * cl_target / (cl_output + 1e-15f) + (1.0f - cl_target) / (1.0f - cl_output + 1e-15f));
-      // distance (l1 loss, size = 1)
-      TensorToken t_diff = t_output.get(1) - t_target_output.get(1);
+      // distance + normal (l1 loss, size = 3 + 3)
+      TensorToken t_diff = t_output.get({1, 7}) - t_target_output.get({1, 7});
+      t_diff.set(0, cl_target * t_diff.get(0));
+      t_diff.set(1, cl_target * t_diff.get(1));
+      t_diff.set(2, cl_target * t_diff.get(2));
+      t_diff.set(3, cl_target * t_diff.get(3));
+      t_diff.set(4, cl_target * t_diff.get(4));
+      t_diff.set(5, cl_target * t_diff.get(5));
       TensorToken ones(t_diff.sizes);
       ones.fill(1.0f);
       l += TensorToken::sqrt(t_diff*t_diff).sum()/(float)(t_diff.total_size()); // TO DO TensorToken.abs()
-      dLoss_dOutput.set(1, TensorToken::g_2op(TensorProgram::WHERE, t_diff, ones) + TensorToken::g_2op(TensorProgram::WHERE, -1.0f * t_diff, -1.0f * ones));
+      dLoss_dOutput.set({1, 7}, TensorToken::g_2op(TensorProgram::WHERE, t_diff, ones) + TensorToken::g_2op(TensorProgram::WHERE, -1.0f * t_diff, -1.0f * ones));
+      dLoss_dOutput.set(1, cl_target * dLoss_dOutput.get(1));
+      dLoss_dOutput.set(2, cl_target * dLoss_dOutput.get(2));
+      dLoss_dOutput.set(3, cl_target * dLoss_dOutput.get(3));
+      dLoss_dOutput.set(4, cl_target * dLoss_dOutput.get(4));
+      dLoss_dOutput.set(5, cl_target * dLoss_dOutput.get(5));
+      dLoss_dOutput.set(6, cl_target * dLoss_dOutput.get(6));
       // mse loss
       //TensorToken t_diff = t_output.get({1, 4}) - t_target_output.get({1, 4});
       //l += (t_diff*t_diff).sum()/(float)(t_diff.total_size());
       //dLoss_dOutput.set({1, 4}, 2.0f*t_diff);
-      // l1 loss
-      //TensorToken t_diff = t_output.get({1, 4}) - t_target_output.get({1, 4});
-      //TensorToken ones(t_diff.sizes);
-      //ones.fill(1.0f);
-      //l += TensorToken::sqrt(t_diff*t_diff).sum()/(float)(t_diff.total_size()); // TO DO TensorToken.abs()
-      //dLoss_dOutput.set({1, 4}, TensorToken::g_2op(TensorProgram::WHERE, t_diff, ones) + TensorToken::g_2op(TensorProgram::WHERE, -1.0f * t_diff, -1.0f * ones));
 
-
-      // final transforms
+      // final transforms 
       dLoss_dOutput = dLoss_dOutput.transpose();
     }
 
