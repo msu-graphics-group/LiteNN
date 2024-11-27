@@ -344,11 +344,12 @@ namespace nn
     {
       TensorToken t_input = input.transpose();
       //std::cout << transposed.sizes[0] << std::endl;
-      TensorToken one(t_input.sizes);
+      TensorToken t = t_input.get(0);
+      TensorToken one(t.sizes);
       one.fill(1.0f);
-      TensorToken t_sigmoid = one/(1.0f + TensorToken::exp(-1.0f*t_input));
+      TensorToken t_sigmoid = one/(1.0f + TensorToken::exp(-1.0f*t));
       //t_input.fill(0.f);
-      t_input.set(0, t_sigmoid.get(0));
+      t_input.set(0, t_sigmoid);
       
       return t_input.transpose(); //sigmoid(x)
     }
