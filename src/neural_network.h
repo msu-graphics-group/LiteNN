@@ -530,6 +530,7 @@ namespace nn
 
   class HashGrid3DLayer : public Layer
   {
+  protected:
     unsigned L, T, F, N_min, N_max;
     std::vector<unsigned> N;
     float b;
@@ -579,7 +580,6 @@ namespace nn
       for (int i = 0; i < L; ++i) {
         TensorToken a = TensorToken::hash_grid_3D(input, T, F, N[i]);
         TensorToken dLoss_dOutput_sub(F, batch_size);
-        // printf("dLoss_dOutput size: %d %d %d\n", dLoss_dOutput.sizes[0], dLoss_dOutput.sizes[1], dLoss_dOutput.sizes[2]);
         TensorToken::issue_command(
           TensorProgram::COPY_STRIDE, 
           dLoss_dOutput, dummy, dLoss_dOutput_sub,
@@ -593,7 +593,78 @@ namespace nn
 
       return TensorToken();
     }
-    virtual std::string get_name() override { return "HashGridCoefs"; }
+    virtual std::string get_name() override { return "HashGrid3D"; }
+  };
+
+  class StackedHashGrid3DLayer : public HashGrid3DLayer
+  {
+    unsigned N_stack;
+  public:
+    StackedHashGrid3DLayer(unsigned N_stack, unsigned L, unsigned T, unsigned F, unsigned N_min, unsigned N_max)
+    : HashGrid3DLayer(L, T, F, N_min, N_max) {
+      this->N_stack = N_stack;
+
+      input_shape[input_shape.size() - 1] = N_stack * 3;
+      output_shape[output_shape.size() - 1] = N_stack * L * F;
+    }
+    virtual TensorToken forward(const TensorToken &in) override {
+      unsigned batch_size = in.sizes[1];
+      TensorToken dummy;
+
+      TensorToken out(N_stack * L * F, batch_size);
+      for (int j = 0; j < N_stack; ++j) {
+        TensorToken in_sub(3u, batch_size);
+        TensorToken::issue_command(
+          TensorProgram::COPY_STRIDE, 
+          in, dummy, in_sub,
+          batch_size, N_stack, 3, j
+        );
+        for (int i = 0; i < L; ++i) {
+          TensorToken a = TensorToken::hash_grid_3D(in_sub, T, F, N[i]);
+          TensorToken b = TensorToken::mat_mul_t(a, weights[i].transpose());
+          TensorToken::issue_command(
+            TensorProgram::COPY_STRIDE,
+            b, dummy, out,
+            batch_size, F, N_stack * L * F, j * L + i
+          );
+        }
+      }
+      
+      return out;
+    }
+    virtual TensorToken backward(const TensorToken &input, const TensorToken &output, const TensorToken &dLoss_dOutput) override {
+      float batch_size = (float)(input.sizes[1]);
+      TensorToken dummy;
+
+      for (int i = 0; i < L; ++i) {
+        dLoss_dWeights[i].fill(0.0f);
+      }
+
+      for (int j = 0; j < N_stack; ++j) {
+        TensorToken input_sub(3u, batch_size);
+        TensorToken::issue_command(
+          TensorProgram::COPY_STRIDE, 
+          input, dummy, input_sub,
+          batch_size, N_stack * 3, 3, j
+        );
+        for (int i = 0; i < L; ++i) {
+          TensorToken a = TensorToken::hash_grid_3D(input_sub, T, F, N[i]);
+          TensorToken dLoss_dOutput_sub(F, batch_size);
+          TensorToken::issue_command(
+            TensorProgram::COPY_STRIDE, 
+            dLoss_dOutput, dummy, dLoss_dOutput_sub,
+            batch_size, L * F, F, i
+          );
+          dLoss_dWeights[i] = dLoss_dWeights[i] + TensorToken::mat_mul_t(
+            a.transpose(),
+            dLoss_dOutput_sub.transpose()
+          ) / batch_size;
+        }
+      }      
+
+      return TensorToken();
+    }
+    virtual std::string get_name() override { return "StackedHashGrid3D"; }
   };
 
   struct OptimizerGD

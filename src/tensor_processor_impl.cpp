@@ -1064,13 +1064,6 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
   }
 }
 
-
-// void TensorProcessorImpl::kernel1D_hash_grid(float *data, int steps, int L, int T, int F, int N_min, unsigned bu, Variable A, Variable B, Variable C)
-// {
-
-// }
-
-
 #define PI_1 1
 #define PI_2 2654435761u
 #define PI_3 805459861
@@ -1086,7 +1079,7 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, i
     float y = data[A.offset + step * 3 + 1];
     float z = data[A.offset + step * 3 + 2];
 
-    /* ======================= */ 
+    /* ======================= */
 
     uint32_t x0 = (uint32_t)(x * (N - 1));
     uint32_t x1 = (uint32_t)(x * (N - 1) + 1);
@@ -1133,6 +1126,8 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, i
     weights[6] = wx * wy * (1.0f - wz);
     weights[7] = wx * wy * wz;
 
+    // printf("%f %f %f\n", wx, wy, wz);
+
     /* ======================= */ 
 
     for (int i = 0; i < T; ++i) {
@@ -1141,6 +1136,10 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, i
 
     for(int i = 0; i < 8; ++i) {
       data[C.offset + step * T + indices[i]] += weights[i];
+      // data[C.offset + step * T + indices[i]] += 1;
     }
+    // data[C.offset + step * T + 0] = x;
+    // data[C.offset + step * T + 1] = y;
+    // data[C.offset + step * T + 2] = z;
   }
 }

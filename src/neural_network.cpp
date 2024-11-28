@@ -517,7 +517,8 @@ namespace nn
       float loss = -1;
       TensorProcessor::get_output("loss", &loss, 1);
       av_loss += loss;
-      if (it > 0 && it % iters_per_validation == 0)
+      // if (it > 0 && it % iters_per_validation == 0)
+      if (it % 3 == 0)
       {
         if (use_validation)
         {
