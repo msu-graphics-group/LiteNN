@@ -2,6 +2,7 @@
 #define INCLUDE_LITENN_NEURAL_NETWORK_H_
 
 #include "tensor_compiler.h"
+#include "statistics.h"
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -653,9 +654,13 @@ namespace nn
     unsigned params_count() const { return total_params; }
     const std::vector<float> &get_weights() const { return weights; }
     TensorProgram get_train_prog(int batch_size, Optimizer optimizer, Loss loss);
+    void train_epochs(const std::vector<float> &inputs /*[input_size, count]*/, const std::vector<float> &outputs /*[output_size, count]*/, TrainStatistics &stats,
+               int batch_size, int epochs, Optimizer optimizer, Loss loss, bool verbose = false);
     void train(const std::vector<float> &inputs /*[input_size, count]*/, const std::vector<float> &outputs /*[output_size, count]*/,
                int batch_size, int iterations, Optimizer optimizer, Loss loss, bool verbose = false);
     void train(const float *data, const float *labels, int samples, int batch_size, int epochs, bool use_validation = false, Optimizer optimizer = OptimizerAdam(0.01f), 
+               Loss loss = Loss::CrossEntropy, Metric metric = Metric::Accuracy, bool verbose = false);
+    void train(const float *data, const float *labels, TrainStatistics *stats, int samples, int batch_size, int epochs, bool use_validation = false, Optimizer optimizer = OptimizerAdam(0.01f), 
                Loss loss = Loss::CrossEntropy, Metric metric = Metric::Accuracy, bool verbose = false);
     void get_evaluate_prog();
     void evaluate(std::vector<float> &input_data, std::vector<float> &output_data, int samples = -1);

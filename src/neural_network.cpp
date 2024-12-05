@@ -459,6 +459,14 @@ namespace nn
     }
   }
 
+  void NeuralNetwork::train_epochs(const std::vector<float> &inputs /*[input_size, count]*/, const std::vector<float> &outputs /*[output_size, count]*/, TrainStatistics &stats,
+                             int batch_size, int epochs, Optimizer optimizer, Loss loss, bool verbose)
+  {
+    unsigned input_size = total_size(layers[0]->input_shape);
+    unsigned count = inputs.size()/input_size;
+    train(inputs.data(), outputs.data(), &stats, count, batch_size, epochs, false, optimizer, loss, Metric::Accuracy, verbose);
+  }
+
   void NeuralNetwork::train(const std::vector<float> &inputs /*[input_size, count]*/, const std::vector<float> &outputs /*[output_size, count]*/,
                              int batch_size, int iterations, Optimizer optimizer, Loss loss, bool verbose)
   {
@@ -468,6 +476,13 @@ namespace nn
   }
 
   void NeuralNetwork::train(const float *data, const float *labels, int samples, int batch_size, int epochs, bool use_validation, Optimizer optimizer, 
+                            Loss loss, Metric metric, bool verbose)
+  {
+    TrainStatistics stats;
+    train(data, labels, &stats, samples, batch_size, epochs, use_validation, optimizer, loss, metric, verbose);
+  }
+
+  void NeuralNetwork::train(const float *data, const float *labels, TrainStatistics *stats, int samples, int batch_size, int epochs, bool use_validation, Optimizer optimizer, 
                             Loss loss, Metric metric, bool verbose)
   {
     initialize();
@@ -554,7 +569,7 @@ namespace nn
       float loss = -1;
       TensorProcessor::get_output("loss", &loss, 1);
       av_loss += loss;
-      if (it > 0 && it % iters_per_validation == 0)
+      if (it > 0 && (it + 1) % iters_per_validation == 0)
       {
         if (use_validation)
         {
@@ -587,6 +602,7 @@ namespace nn
         if (verbose)
           printf("%s/epoch, ETA: %s\n", time_pretty_str(ms*iters_per_epoch).c_str(), time_pretty_str(ms*(iterations-it)).c_str());
 
+        stats->avg_loss = av_loss/iters_per_validation;
         av_loss = 0;
       }
 
