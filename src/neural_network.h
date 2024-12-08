@@ -549,7 +549,7 @@ namespace nn
       for (unsigned i = 0; i < L; ++i, b_i *= b) {
         N[i] = N_min * b_i;
       }
-    
+
       input_shape.push_back(3);
       output_shape.push_back(L * F);
     }
@@ -589,7 +589,7 @@ namespace nn
           a.transpose(),
           dLoss_dOutput_sub.transpose()
         ) / batch_size;
-      }      
+      }
 
       return TensorToken();
     }
@@ -607,7 +607,7 @@ namespace nn
       input_shape[input_shape.size() - 1] = N_stack * 3;
       output_shape[output_shape.size() - 1] = N_stack * L * F;
     }
-    virtual TensorToken forward(const TensorToken &in) override {
+    virtual TensorToken forward(const TensorToken &in) override {     
       unsigned batch_size = in.sizes[1];
       TensorToken dummy;
 
@@ -617,7 +617,7 @@ namespace nn
         TensorToken::issue_command(
           TensorProgram::COPY_STRIDE, 
           in, dummy, in_sub,
-          batch_size, N_stack, 3, j
+          batch_size, N_stack * 3, 3, j
         );
         for (int i = 0; i < L; ++i) {
           TensorToken a = TensorToken::hash_grid_3D(in_sub, T, F, N[i]);
@@ -662,7 +662,7 @@ namespace nn
         }
       }      
 
-      return TensorToken();
+      return TensorToken();   
     }
     virtual std::string get_name() override { return "StackedHashGrid3D"; }
   };
