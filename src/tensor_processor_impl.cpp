@@ -1072,8 +1072,6 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, i
 {
   #pragma omp parallel for
   for (int step = 0; step < steps; ++step) {
-    float b_i = 1;
-    b_i *= b;
 
     float x = data[A.offset + step * 3 + 0];
     float y = data[A.offset + step * 3 + 1];

@@ -1995,9 +1995,11 @@ void tp_test_1_tensor_processor()
   {
     printf("TEST 20. MULTIRESOLUTION HASHGRID\n");
 
+    float radius = 70;
+
     int batch_size = 5'000;
     unsigned img_size = 800 * 800;
-    int L = 16, T = 256, F = 4, N_min = 4, N_max = 32;
+    int L = 16, T = 1024 * 0.25, F = 4, N_min = 4, N_max = 32;
 
     NeuralNetwork nn2;
     unsigned dim = 512;
@@ -2017,31 +2019,31 @@ void tp_test_1_tensor_processor()
     // nn2.add_layer(std::make_shared<ReLULayer>());
     // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
     nn2.add_layer(std::make_shared<ReLULayer>());
-    nn2.add_layer(std::make_shared<DenseLayer>(dim, 1), Initializer::He);
-    nn2.add_layer(std::make_shared<SigmoidLayer>());
-    // nn2.add_layer(std::make_shared<DenseLayer>(dim, 2), Initializer::Siren);
-    // nn2.add_layer(std::make_shared<SoftMaxLayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, 1), Initializer::He);
+    // nn2.add_layer(std::make_shared<SigmoidLayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, 2), Initializer::He);
+    nn2.add_layer(std::make_shared<SoftMaxLayer>());
 
     unsigned train_size = 100 * img_size;
 
     std::vector<float> x_train = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/points_10.bin", train_size * 6);
     std::vector<float> dists_train = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/distances_10.bin", train_size);
     int k = 20;
-    std::cout << x_train[k] << " " << x_train[k] << " " << x_train[k] << std::endl;
-    std::cout << x_train[k] * x_train[k] + x_train[k] * x_train[k] + x_train[k] * x_train[k] << std::endl;
+    std::cout << x_train[k * 3 + 0] << " " << x_train[k * 3 + 1] << " " << x_train[k * 3 + 2] << std::endl;
+    std::cout << x_train[k * 3 + 0] * x_train[k * 3 + 0] + x_train[k * 3 + 1] * x_train[k * 3 + 1] + x_train[k * 3 + 2] * x_train[k * 3 + 2] << std::endl;
     for (int i = 0; i < train_size * 6; ++i) {
-      x_train[i] = (x_train[i] + 120) / 240;
+      x_train[i] = (x_train[i] + radius) / (radius * 2);
     }
 
     std::vector<float> y_train(train_size, 0);
     for (int i = 0; i < train_size; i++) y_train[i] = (dists_train[i] == 0.0) ? 0.0 : 1.0;  
-    // y_train.resize(train_size * 2);
-    // for (int i = train_size - 1; i >= 0; --i) {
-    //   y_train[i * 2] = y_train[i];
-    //   y_train[i * 2 + 1] = 1 - y_train[i];
-    //   // y_train[i * 2] = 1;
-    //   // y_train[i * 2 + 1] = 0;
-    // }
+    y_train.resize(train_size * 2);
+    for (int i = train_size - 1; i >= 0; --i) {
+      y_train[i * 2] = y_train[i];
+      y_train[i * 2 + 1] = 1 - y_train[i];
+      // y_train[i * 2] = 1;
+      // y_train[i * 2 + 1] = 0;
+    }
 
     nn2.set_batch_size_for_evaluate(batch_size);
     nn2.train(
@@ -2050,8 +2052,8 @@ void tp_test_1_tensor_processor()
       train_size / 30, batch_size, 1,
       false,
       OptimizerAdam(0.003f),
-      // Loss::CrossEntropy, Metric::Accuracy,
-      Loss::MSE, Metric::MSE,
+      Loss::CrossEntropy, Metric::Accuracy,
+      // Loss::MSE, Metric::MSE,
       true
     );
     cout << "lol" << endl;
@@ -2061,7 +2063,7 @@ void tp_test_1_tensor_processor()
     std::vector<float> x_cam = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/points_camera.bin", cam_size * 6);
     std::vector<float> dists_cam = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/distances_camera.bin", cam_size);
     for (int i = 0; i < cam_size * 6; ++i) {
-      x_cam[i] = (x_cam[i] + 120) / 240;
+      x_cam[i] = (x_cam[i] + radius) / (radius * 2);
     }
 
     std::vector<float> pred(cam_size * 2, 0);
@@ -2069,8 +2071,8 @@ void tp_test_1_tensor_processor()
 
     std::vector<unsigned char> img(img_size, 0);
     for (int i = 0; i < img_size; i++) {
-      img[i] = (pred[i] > 0.5) * 255;
-      // img[i] = (pred[i * 2] > 0.5) * 255;
+      // img[i] = (pred[i] > 0.5) * 255;
+      img[i] = (pred[i * 2] > 0.5) * 255;
       // img[i] = dists_cam[i] == 0.0 ? 0 : 255;
     }      
     stbi_write_png("img2.png", 800, 800, 1, img.data(), 800);
