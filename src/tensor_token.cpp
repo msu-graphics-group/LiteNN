@@ -625,4 +625,17 @@ namespace nn
     return res;
   }
 
+  TensorToken TensorToken::hash_grid_3D(
+    const TensorToken &xyz,
+    unsigned T, unsigned F,
+    unsigned N
+  ) {
+    assert(xyz.Dim == 2);
+    unsigned res_sizes[TensorProgram::MAX_DIM] = {T,xyz.sizes[1],0,0,0,0,0,0};
+    TensorToken res(res_sizes);
+
+    tp->add_command(TensorProgram::HASH_GRID_3D, xyz.id, 0, res.id, T, F, N);
+
+    return res;
+  }
 }

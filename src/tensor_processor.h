@@ -26,6 +26,7 @@ namespace nn
       MOV,      // memcpy(C,A, sizeof(float)*A.total_size)
       FILL,     // fill(C, as_float(arg0))
       COPY,     // memcpy(C+arg1, A+arg0, sizeof(float)*arg2)
+      COPY_STRIDE, // copy with stride (for concatenation)
       PAD,      // padding along the given axis
       FLIP,     // reverse order of values along the given axis
       DILATE,   // put some zero values between values from input tensor
@@ -70,7 +71,7 @@ namespace nn
       CONV_3D,  //convolution with arbitrary number of channels and filters. Borders are ignored
       MPOOL_3D, // C = 3D max pooling(A) with arbitrary window size
       MPOOL_3D_D,// derivative of 3D max pooling
-
+      HASH_GRID_3D, // a surprise tool that will help us later
       
       CMD_COUNT
     };

@@ -30,6 +30,16 @@ protected:
   virtual void GetExecutionTime(const char *a_funcName, float a_out[4]) { a_out[0] = 0.0f; } // will be overriden in generated class
   virtual void __attribute__((noinline)) kernel1D_fill(float *data, unsigned steps, Variable A, float val); // A = val
   virtual void __attribute__((noinline)) kernel1D_copy(float *data, unsigned steps, unsigned from, unsigned to, Variable A, Variable B); 
+  virtual void __attribute__((noinline)) 
+  kernel1D_copy_stride(
+    float *data, 
+    unsigned steps, 
+    unsigned A_size, 
+    unsigned B_size,
+    unsigned iter, 
+    Variable A,
+    Variable B
+  ); 
   virtual void __attribute__((noinline)) kernel1D_pad(float *data, unsigned steps, unsigned step_size, unsigned left_pad, unsigned right_pad, 
                                                       Variable A, Variable B); 
   virtual void __attribute__((noinline)) kernel1D_flip(float *data, unsigned steps, unsigned flip_size, unsigned group_size, Variable A, Variable B); 
@@ -100,7 +110,7 @@ protected:
                                                               int window_x, int window_y, int window_z, Variable A, Variable B);
   virtual void __attribute__((noinline)) kernel3D_max_pool_3D_diff(float *data, int steps, int x_steps, int y_steps, int z_steps, 
                                                                    int window_x, int window_y, int window_z, Variable A, Variable B, Variable C); 
-
+  virtual void __attribute__((noinline)) kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, float b, Variable A, Variable C);
 
   virtual void __attribute__((noinline)) kernel1D_set_input(const float* data_in, unsigned offset, unsigned a_size);
   virtual void __attribute__((noinline)) kernel1D_get_output(float* data_out, unsigned offset, unsigned a_size);

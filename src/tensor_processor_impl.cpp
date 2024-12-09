@@ -159,6 +159,9 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
     case nn::TensorProgram::COPY:
       kernel1D_copy(memory.data(), arg2, arg0, arg1, A, C);
       break;
+    case nn::TensorProgram::COPY_STRIDE:
+      kernel1D_copy_stride(memory.data(), arg0, arg1, arg2, arg3, A, C);
+      break;
     case nn::TensorProgram::TRANSP:
     {
       unsigned transp_dim = arg0;
@@ -305,6 +308,13 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       kernel3D_max_pool_3D_diff(memory.data(), steps, A.sizes[0]/window_x, A.sizes[1]/window_y, A.sizes[2]/window_z, window_x, window_y, window_z, A, B, C);
     }
       break;
+    case nn::TensorProgram::HASH_GRID_3D:
+    {
+      unsigned steps = A.sizes[1];
+      float b = *(float*)(&arg4);
+      kernel1D_hash_grid_3D(memory.data(), steps, arg0, arg1, arg2, b, A, C);
+    }
+      break;
     default:
       break;
     }
@@ -375,6 +385,23 @@ void TensorProcessorImpl::kernel1D_copy(float *data, unsigned steps, unsigned fr
   for (unsigned i = 0; i < steps; i++) 
     data[B.offset + to + i] = 1.0f*data[A.offset + from + i];
 }
+
+void TensorProcessorImpl::kernel1D_copy_stride(float *data, unsigned steps, unsigned A_size, unsigned B_size, unsigned iter, Variable A, Variable B)
+{
+  #pragma omp parallel for
+  for (unsigned i = 0; i < steps; ++i) {
+    if (B_size > A_size) {
+      for (unsigned j = 0; j < A_size; ++j) {
+        data[B.offset + i * B_size + iter * A_size + j] = data[A.offset + i * A_size + j];
+      }
+    } else {
+      for (unsigned j = 0; j < B_size; ++j) {
+        data[B.offset + i * B_size + j] = data[A.offset + i * A_size + iter * B_size + j];
+      }
+    }
+  }
+}
+
 void TensorProcessorImpl::kernel1D_fill(float *data, unsigned steps, Variable A, float val)
 {
   for (unsigned i = 0; i < steps; i++) 
@@ -1033,6 +1060,74 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
               data[dLoss_dOutput.offset + step*x_steps*y_steps*z_steps + z*y_steps*x_steps + y*x_steps + x];
         }
       }
+    }
+  }
+}
+
+#define PI_1 1
+#define PI_2 2654435761u
+#define PI_3 805459861
+
+void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, float b, Variable A, Variable C)
+{
+  #pragma omp parallel for
+  for (int step = 0; step < steps; ++step) {
+    float b_i = 1;
+    b_i *= b;
+
+    float x = data[A.offset + step * 3 + 0];
+    float y = data[A.offset + step * 3 + 1];
+    float z = data[A.offset + step * 3 + 2];
+
+    /* ======================= */
+
+    uint32_t x0 = (uint32_t)(x * (N - 1));
+    uint32_t x1 = (uint32_t)(x * (N - 1) + 1);
+
+    uint32_t y0 = (uint32_t)(y * (N - 1));
+    uint32_t y1 = (uint32_t)(y * (N - 1) + 1);
+
+    uint32_t z0 = (uint32_t)(z * (N - 1));
+    uint32_t z1 = (uint32_t)(z * (N - 1) + 1);
+
+    /* ======================= */ 
+
+    float wx = x * (N - 1) - x0;
+    float wy = y * (N - 1) - y0;
+    float wz = z * (N - 1) - z0;
+
+    /* ======================= */ 
+
+    uint32_t indices[8];
+    indices[0] = (x0 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[1] = (x0 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[2] = (x0 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[3] = (x0 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+    indices[4] = (x1 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[5] = (x1 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[6] = (x1 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[7] = (x1 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+
+    /* ======================= */ 
+
+    float weights[8];
+    weights[0] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
+    weights[1] = (1.0f - wx) * (1.0f - wy) * wz;
+    weights[2] = (1.0f - wx) * wy * (1.0f - wz);
+    weights[3] = (1.0f - wx) * wy * wz;
+    weights[4] = wx * (1.0f - wy) * (1.0f - wz);
+    weights[5] = wx * (1.0f - wy) * wz;
+    weights[6] = wx * wy * (1.0f - wz);
+    weights[7] = wx * wy * wz;
+
+    /* ======================= */ 
+
+    for (int i = 0; i < T; ++i) {
+      data[C.offset + step * T + i] = 0;
+    }
+
+    for(int i = 0; i < 8; ++i) {
+      data[C.offset + step * T + indices[i]] += weights[i];
     }
   }
 }

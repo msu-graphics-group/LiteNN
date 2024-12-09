@@ -23,6 +23,11 @@
 
 #include <stb_image_write.h>
 
+#include <iostream>
+#include <fstream>
+using std::cin, std::cout, std::endl;
+
+
 namespace nn
 {
   static const std::string TEST_IMAGE = "resources/1a.png";
@@ -1932,6 +1937,10 @@ void tp_test_1_tensor_processor()
   void nn_test_19_torch_model()
   {
     printf("TEST 19. GETTING MODEL WEIGHTS FROM TORCH\n");
+
+    printf("TEST 19 IS DISABLED\n");
+    return;
+
     Dataset dataset;
     read_MNIST_dataset(base_path + std::string("resources/MNIST-dataset"), &dataset);
     train_test_split(&dataset, 0.1);
@@ -1972,6 +1981,160 @@ void tp_test_1_tensor_processor()
       printf("passed\n");
     else
       printf("FAILED, error rate %f\n", error_rate);
+  }
+
+  std::vector<float> read_data(const std::string &path, unsigned size)
+  {
+    std::ifstream f(path, std::ios::binary);
+    std::vector<float> data(size);
+    f.read((char*)data.data(), size*sizeof(float));
+    return data;
+  }
+
+  void nn_test_20_hashgrid()
+  {
+    printf("TEST 20. MULTIRESOLUTION HASHGRID\n");
+
+    int batch_size = 5'000;
+    unsigned img_size = 800 * 800;
+    int L = 16, T = 256, F = 4, N_min = 4, N_max = 32;
+
+    NeuralNetwork nn2;
+    unsigned dim = 512;
+    nn2.add_layer(std::make_shared<StackedHashGrid3DLayer>(2, L, T, F, N_min, N_max), Initializer::He);
+    nn2.add_layer(std::make_shared<DenseLayer>(2 * L * F, dim), Initializer::Siren);
+    // nn2.add_layer(std::make_shared<DenseLayer>(6, dim), Initializer::Siren);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, 1), Initializer::He);
+    nn2.add_layer(std::make_shared<SigmoidLayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, 2), Initializer::Siren);
+    // nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+    unsigned train_size = 100 * img_size;
+
+    std::vector<float> x_train = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/points_10.bin", train_size * 6);
+    std::vector<float> dists_train = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/distances_10.bin", train_size);
+    int k = 20;
+    std::cout << x_train[k] << " " << x_train[k] << " " << x_train[k] << std::endl;
+    std::cout << x_train[k] * x_train[k] + x_train[k] * x_train[k] + x_train[k] * x_train[k] << std::endl;
+    for (int i = 0; i < train_size * 6; ++i) {
+      x_train[i] = (x_train[i] + 120) / 240;
+    }
+
+    std::vector<float> y_train(train_size, 0);
+    for (int i = 0; i < train_size; i++) y_train[i] = (dists_train[i] == 0.0) ? 0.0 : 1.0;  
+    // y_train.resize(train_size * 2);
+    // for (int i = train_size - 1; i >= 0; --i) {
+    //   y_train[i * 2] = y_train[i];
+    //   y_train[i * 2 + 1] = 1 - y_train[i];
+    //   // y_train[i * 2] = 1;
+    //   // y_train[i * 2 + 1] = 0;
+    // }
+
+    nn2.set_batch_size_for_evaluate(batch_size);
+    nn2.train(
+      x_train.data(),
+      y_train.data(),
+      train_size / 30, batch_size, 1,
+      false,
+      OptimizerAdam(0.003f),
+      // Loss::CrossEntropy, Metric::Accuracy,
+      Loss::MSE, Metric::MSE,
+      true
+    );
+    cout << "lol" << endl;
+
+    unsigned cam_size = img_size;
+
+    std::vector<float> x_cam = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/points_camera.bin", cam_size * 6);
+    std::vector<float> dists_cam = read_data("/home/alehandreus/E/Graphics/NBVH/RayDF/WABBAJACK/datasets/lego_mesh/generated/distances_camera.bin", cam_size);
+    for (int i = 0; i < cam_size * 6; ++i) {
+      x_cam[i] = (x_cam[i] + 120) / 240;
+    }
+
+    std::vector<float> pred(cam_size * 2, 0);
+    nn2.evaluate(x_cam, pred, cam_size);
+
+    std::vector<unsigned char> img(img_size, 0);
+    for (int i = 0; i < img_size; i++) {
+      img[i] = (pred[i] > 0.5) * 255;
+      // img[i] = (pred[i * 2] > 0.5) * 255;
+      // img[i] = dists_cam[i] == 0.0 ? 0 : 255;
+    }      
+    stbi_write_png("img2.png", 800, 800, 1, img.data(), 800);
+
+    cout << "FINISHED" << endl;
+  }
+
+  void nn_test_21_hashgrid()
+  {
+    printf("TEST 21. MULTIRESOLUTION HASHGRID\n");
+
+    int batch_size = 5000;
+    // int batch_size = 5;
+    int L = 2, T = 8*8*8, F = 3, N_min = 4, N_max = 16;
+
+    NeuralNetwork nn2;
+    unsigned dim = 128;
+    // nn2.add_layer(std::make_shared<HashGrid3DLayer>(L, T, F, N_min, N_max), Initializer::He);
+    nn2.add_layer(std::make_shared<StackedHashGrid3DLayer>(2, L, T, F, N_min, N_max), Initializer::He);
+    nn2.add_layer(std::make_shared<DenseLayer>(2 * L * F, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<DenseLayer>(6, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    // nn2.add_layer(std::make_shared<DenseLayer>(dim, dim), Initializer::He);
+    // nn2.add_layer(std::make_shared<ReLULayer>());
+    nn2.add_layer(std::make_shared<DenseLayer>(dim, 2), Initializer::He);
+    nn2.add_layer(std::make_shared<SoftMaxLayer>());
+
+    unsigned train_size = 1'000'000;
+    float radius = 1;
+    std::vector<float> x_train(train_size * 3 * 2, 0);
+    std::vector<float> y_train(train_size * 2, 0);
+    
+    for (int i = 0; i < train_size; i++) {
+      float x = (float)rand() / RAND_MAX;
+      float y = (float)rand() / RAND_MAX;
+      float z = (float)rand() / RAND_MAX;
+
+      x_train[i * 6 + 0] = x;
+      x_train[i * 6 + 1] = y;
+      x_train[i * 6 + 2] = z;
+
+      x_train[i * 6 + 3] = x;
+      x_train[i * 6 + 4] = y;
+      x_train[i * 6 + 5] = z;
+
+      int inside = (x * x + y * y + z * z < radius * radius);
+      y_train[i * 2] = inside;
+      y_train[i * 2 + 1] = 1 - inside;
+    }
+
+    nn2.set_batch_size_for_evaluate(batch_size);
+    nn2.train(
+      x_train.data(),
+      y_train.data(),
+      train_size, batch_size, 1,
+      true,
+      OptimizerAdam(0.001f),
+      Loss::CrossEntropy, Metric::Accuracy,
+      true
+    );
   }
 
   void perform_tests_tensor_processor(const std::vector<int> &test_ids)
@@ -2099,6 +2262,9 @@ void tp_test_1_tensor_processor()
       nn_test_16_ReLU_classifier,
       nn_test_17_Leaky_ReLU_classifier,
       nn_test_18_conv3D_backward,
+      nn_test_19_torch_model,
+      nn_test_20_hashgrid,
+      nn_test_21_hashgrid,
     };
 
     if (tests.empty())
