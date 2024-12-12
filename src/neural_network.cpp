@@ -486,7 +486,6 @@ namespace nn
                             Loss loss, Metric metric, bool verbose)
   {
     initialize();
-
     TensorProgram train_prog = get_train_prog(batch_size, optimizer, loss);
 
     unsigned input_size = total_size(layers[0]->input_shape);
@@ -496,7 +495,152 @@ namespace nn
     unsigned count = samples - valid_count;
     unsigned iters_per_epoch = std::max(1u, count/batch_size);
     unsigned iterations = epochs * iters_per_epoch;
-    unsigned iters_per_validation = std::max(100u, iters_per_epoch);
+    unsigned iters_per_validation = iters_per_epoch;
+
+    float start_learning_rate = 0;
+    float end_learning_rate = 0;
+    if (std::holds_alternative<OptimizerGD>(optimizer))
+    {
+      OptimizerGD opt = std::get<OptimizerGD>(optimizer);
+      start_learning_rate = opt.learning_rate;
+      end_learning_rate = opt.learning_rate;
+    }
+    else if (std::holds_alternative<OptimizerAdam>(optimizer))
+    {
+      OptimizerAdam opt = std::get<OptimizerAdam>(optimizer);
+      start_learning_rate = opt.learning_rate;
+      end_learning_rate = opt.minimum_learning_rate;
+    }
+    else if (std::holds_alternative<OptimizerRMSProp>(optimizer)) 
+    {
+      OptimizerRMSProp opt = std::get<OptimizerRMSProp>(optimizer);
+      start_learning_rate = opt.learning_rate;
+      end_learning_rate = opt.minimum_learning_rate;
+    }
+    else if (std::holds_alternative<OptimizerMomentum>(optimizer)) 
+    {
+      OptimizerMomentum opt = std::get<OptimizerMomentum>(optimizer);
+      start_learning_rate = opt.learning_rate;
+      end_learning_rate = opt.learning_rate;    
+    }
+    else
+    {
+      printf("NeuralNetwork: unknown optimizer!!!\n");
+      assert(false);
+    }
+
+    std::vector<float> V(total_params, 0);
+    std::vector<float> S(total_params, 0);
+    std::vector<float> in_batch(input_size*batch_size);
+    std::vector<float> out_batch(output_size*batch_size);
+    std::vector<float> validation_labels(output_size*valid_count);
+
+    std::vector<float> best_weights = weights;
+    float best_metric = (metric == Metric::MSE || metric == Metric::MAE) ? 1e9 : -1e9;
+
+    TensorProcessor::set_program(train_prog);
+    TensorProcessor::set_input("W", weights.data(), weights.size());
+    TensorProcessor::set_input("V", V.data(), V.size());
+    TensorProcessor::set_input("S", S.data(), S.size());
+
+    if (verbose)
+      printf("started training %u iterations %d epochs\n", iterations, epochs);
+    float av_loss = 0;
+    auto t_prev = std::chrono::steady_clock::now();
+
+    for (int it=0;it<iterations;it++)
+    {
+      for (int i=0;i<batch_size;i++)
+      {
+        unsigned b_id = rand()%count;
+        memcpy(in_batch.data() + i*input_size, data + b_id*input_size, sizeof(float)*input_size);
+        memcpy(out_batch.data() + i*output_size, labels + b_id*output_size, sizeof(float)*output_size);
+      }
+
+      float iter = it;
+      float r = it/(float)iterations;
+      float learning_rate = (1-r)*start_learning_rate + r*end_learning_rate;
+      TensorProcessor::set_input("In", in_batch.data(), in_batch.size());
+      TensorProcessor::set_input("Out", out_batch.data(), out_batch.size());
+      TensorProcessor::set_input("iter", &iter, 1);
+      TensorProcessor::set_input("learning_rate", &learning_rate, 1);
+      TensorProcessor::execute();
+      float loss = -1;
+      TensorProcessor::get_output("loss", &loss, 1);
+      av_loss += loss;
+      if (it > 0 && (it + 1) % iters_per_validation == 0)
+      {
+        if (use_validation)
+        {
+          TensorProcessor::get_output("W", weights.data(), weights.size());
+          TensorProcessor::get_output("V", V.data(), V.size());
+          TensorProcessor::get_output("S", S.data(), S.size());
+          evaluate(data + count*input_size, validation_labels.data(), valid_count);
+          TensorProcessor::set_program(train_prog);
+          TensorProcessor::set_input("W", weights.data(), weights.size());
+          TensorProcessor::set_input("V", V.data(), V.size());
+          TensorProcessor::set_input("S", S.data(), S.size());
+
+          float m = calculate_metric(validation_labels.data(), labels + count*output_size, valid_count, metric);
+          if (( (metric == Metric::MSE || metric == Metric::MAE) && m <= best_metric) ||
+              (!(metric == Metric::MSE || metric == Metric::MAE) && m >= best_metric))
+          {
+            best_metric = m;
+            memcpy(best_weights.data(), weights.data(), sizeof(float)*weights.size());
+          }
+
+          if (verbose)
+            printf("[%d/%d] Loss = %f Metric = %f ", it/iters_per_epoch, iterations/iters_per_epoch, av_loss/iters_per_validation, m);
+        }
+        else if (verbose)
+          printf("[%d/%d] Loss = %f ", it/iters_per_epoch, iterations/iters_per_epoch, av_loss/iters_per_validation);
+        
+        auto t = std::chrono::steady_clock::now();               
+        double ms = 0.001*std::chrono::duration_cast<std::chrono::microseconds>(t - t_prev).count()/iters_per_validation;
+        t_prev = t;
+        if (verbose)
+          printf("%s/epoch, ETA: %s\n", time_pretty_str(ms*iters_per_epoch).c_str(), time_pretty_str(ms*(iterations-it)).c_str());
+
+        stats->avg_loss = av_loss/iters_per_validation;
+        av_loss = 0;
+      }
+
+      if (DEBUG)
+      {
+        std::vector<float> grad(weights.size(),0);
+        TensorProcessor::get_output("grad", grad.data(), grad.size());
+        TensorProcessor::get_output("W", weights.data(), weights.size());
+        printf("grad = [ ");
+        for (int i=0;i<weights.size();i++)
+          printf("%f ", grad[i]);
+        printf("]\n");
+
+        printf("w = [ ");
+        for (int i=0;i<weights.size();i++)
+          printf("%f ", weights[i]);
+        printf("]\n");
+      }
+    }
+    TensorProcessor::get_output("W", weights.data(), weights.size());
+  }
+
+  void NeuralNetwork::set_trainer(int batch_size, Optimizer optimizer, Loss loss)
+  {
+    initialize();
+    train_prog = get_train_prog(batch_size, optimizer, loss);
+  }
+
+  void NeuralNetwork::continue_train(const float *data, const float *labels, TrainStatistics *stats, int samples, int batch_size, int epochs, bool use_validation, Optimizer optimizer, 
+                            Loss loss, Metric metric, bool verbose)
+  {
+    unsigned input_size = total_size(layers[0]->input_shape);
+    unsigned output_size = total_size(layers.back()->output_shape);
+    float validation_frac = use_validation ? 0.1f : 0.0f;
+    unsigned valid_count = samples*validation_frac;
+    unsigned count = samples - valid_count;
+    unsigned iters_per_epoch = std::max(1u, count/batch_size);
+    unsigned iterations = epochs * iters_per_epoch;
+    unsigned iters_per_validation = iters_per_epoch;
 
     float start_learning_rate = 0;
     float end_learning_rate = 0;

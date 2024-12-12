@@ -801,6 +801,9 @@ namespace nn
                Loss loss = Loss::CrossEntropy, Metric metric = Metric::Accuracy, bool verbose = false);
     void train(const float *data, const float *labels, TrainStatistics *stats, int samples, int batch_size, int epochs, bool use_validation = false, Optimizer optimizer = OptimizerAdam(0.01f), 
                Loss loss = Loss::CrossEntropy, Metric metric = Metric::Accuracy, bool verbose = false);
+    void set_trainer(int batch_size, Optimizer optimizer, Loss loss);
+    void continue_train(const float *data, const float *labels, TrainStatistics *stats, int samples, int batch_size, int epochs, bool use_validation, Optimizer optimizer, 
+                            Loss loss, Metric metric, bool verbose);
     void get_evaluate_prog();
     void evaluate(std::vector<float> &input_data, std::vector<float> &output_data, int samples = -1);
     void evaluate(const float *input_data, float *output_labels, int samples);
@@ -817,6 +820,7 @@ namespace nn
     std::vector<float> weights;
     unsigned total_params = 0;
     TensorProgram evaluate_prog;
+    TensorProgram train_prog;
   };
 }
 
