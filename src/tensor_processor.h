@@ -73,6 +73,7 @@ namespace nn
       MPOOL_3D_D,// derivative of 3D max pooling
       HASH_GRID_3D, // a surprise tool that will help us later
       HASH_GRID_3D_COEFS,
+      HASH_GRID_3D_BACKWARD,
       
       CMD_COUNT
     };

@@ -671,17 +671,13 @@ namespace nn
           batch_size, N_stack * 3, 3, j
         );
         for (int i = 0; i < L; ++i) {
-          TensorToken a = TensorToken::hash_grid_3D_coefs(input_sub, T, N[i]);
           TensorToken dLoss_dOutput_sub(F, batch_size);
           TensorToken::issue_command(
             TensorProgram::COPY_STRIDE, 
             dLoss_dOutput, dummy, dLoss_dOutput_sub,
             batch_size, L * F, F, i
           );
-          dLoss_dWeights[i] = dLoss_dWeights[i] + TensorToken::mat_mul_t(
-            a.transpose(),
-            dLoss_dOutput_sub.transpose()
-          ) / batch_size;
+          dLoss_dWeights[i] = dLoss_dWeights[i] + TensorToken::hash_grid_3D_backward(input_sub, dLoss_dOutput_sub, T, F, N[i]) / batch_size;
         }
       }      
 

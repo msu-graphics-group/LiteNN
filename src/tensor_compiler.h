@@ -151,8 +151,9 @@ namespace nn
     static TensorToken mat_mul_t(const TensorToken &A, const TensorToken &B);
     static TensorToken conv2D(const TensorToken &A, const TensorToken &kernel, unsigned stride = 1);
     static TensorToken conv3D(const TensorToken &A, const TensorToken &kernel, unsigned stride = 1);
-    static TensorToken hash_grid_3D_coefs(const TensorToken &xyz, unsigned T, unsigned N);
     static TensorToken hash_grid_3D(const TensorToken &xyz, const TensorToken &table, unsigned T, unsigned F, unsigned N);
+    static TensorToken hash_grid_3D_coefs(const TensorToken &xyz, unsigned T, unsigned N);
+    static TensorToken hash_grid_3D_backward(const TensorToken &xyz, const TensorToken &dLoss_dOutput, unsigned T, unsigned F, unsigned N);
 
     unsigned id = 0;
     unsigned Dim = 0;

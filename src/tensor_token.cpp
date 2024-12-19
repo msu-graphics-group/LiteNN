@@ -625,23 +625,21 @@ namespace nn
     return res;
   }
 
-  TensorToken TensorToken::hash_grid_3D_coefs(const TensorToken &xyz, unsigned T, unsigned N) {
-    assert(xyz.Dim == 2);
-    unsigned res_sizes[TensorProgram::MAX_DIM] = {T,xyz.sizes[1],0,0,0,0,0,0};
-    TensorToken res(res_sizes);
-
-    tp->add_command(TensorProgram::HASH_GRID_3D_COEFS, xyz.id, 0, res.id, T, N);
-
-    return res;
-  }
-
   TensorToken TensorToken::hash_grid_3D(const TensorToken &xyz, const TensorToken &table, unsigned T, unsigned F, unsigned N) {
-    assert(xyz.Dim == 2);
-    unsigned res_sizes[TensorProgram::MAX_DIM] = {T,xyz.sizes[1],0,0,0,0,0,0};
-    TensorToken res(res_sizes);
-
+    TensorToken res(F, xyz.sizes[1]);
     tp->add_command(TensorProgram::HASH_GRID_3D, xyz.id, table.id, res.id, T, F, N);
-
     return res;
   }
+
+  TensorToken TensorToken::hash_grid_3D_coefs(const TensorToken &xyz, unsigned T, unsigned N) {
+    TensorToken res(T, xyz.sizes[1]);
+    tp->add_command(TensorProgram::HASH_GRID_3D_COEFS, xyz.id, 0, res.id, T, N);
+    return res;
+  }
+
+  TensorToken TensorToken::hash_grid_3D_backward(const TensorToken &xyz, const TensorToken &dLoss_dOutput, unsigned T, unsigned F, unsigned N) {
+    TensorToken res(F, T);
+    tp->add_command(TensorProgram::HASH_GRID_3D_BACKWARD, xyz.id, dLoss_dOutput.id, res.id, T, F, N);
+    return res;
+  }  
 }

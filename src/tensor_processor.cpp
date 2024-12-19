@@ -64,6 +64,7 @@ namespace nn
     {MPOOL_3D_D       , "MPOOL_3D_D"        , ALGEBRA       , SELF_APPLICABLE_NO },
     {HASH_GRID_3D     , "HASH_GRID_3D"      , ALGEBRA       , SELF_APPLICABLE_NO },
     {HASH_GRID_3D_COEFS     , "HASH_GRID_3D_COEFS"      , ALGEBRA       , SELF_APPLICABLE_NO },
+    {HASH_GRID_3D_BACKWARD     , "HASH_GRID_3D_BACKWARD"      , ALGEBRA       , SELF_APPLICABLE_NO },
   };
 
   std::unique_ptr<TensorProcessor> proc;

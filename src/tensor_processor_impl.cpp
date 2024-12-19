@@ -320,6 +320,12 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
       kernel1D_hash_grid_3D_coefs(memory.data(), steps, arg0, arg1, A, C);
     }
       break;
+    case nn::TensorProgram::HASH_GRID_3D_BACKWARD:
+    {
+      unsigned steps = A.sizes[1];
+      kernel1D_hash_grid_3D_backward(memory.data(), steps, arg0, arg1, arg2, A, B, C);
+    }
+      break;
     default:
       break;
     }
@@ -1076,8 +1082,12 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
 void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, Variable A, Variable B, Variable C)
 {
   /*
-    read input coordinates (x, y, z) from A and put embedding of size F into C from table B
-    (for one layer of dimension N, table size T and embedding size F) 
+    input:
+    A: coordinates, B x 3
+    B: table, T x F
+
+    output:
+    C: embedding, B x F
   */
 
   #pragma omp parallel for
@@ -1145,8 +1155,11 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, i
 void TensorProcessorImpl::kernel1D_hash_grid_3D_coefs(float *data, int steps, int T, int N, Variable A, Variable C)
 {
   /*
-    read input coordinates (x, y, z) from A and put T coefficients into C
-    (for one layer of dimension N and table size T)
+    input:
+    A: coordinates, B x 3
+
+    output:
+    C: coefficients for each embedding, B x T
   */
 
   #pragma omp parallel for
@@ -1205,6 +1218,79 @@ void TensorProcessorImpl::kernel1D_hash_grid_3D_coefs(float *data, int steps, in
 
     for(int i = 0; i < 8; ++i) {
       data[C.offset + step * T + indices[i]] += weights[i];
+    }
+  }
+}
+
+
+void TensorProcessorImpl::kernel1D_hash_grid_3D_backward(float *data, int steps, int T, int F, int N, Variable A, Variable B, Variable C)
+{
+  /*
+    input:
+    A: coordinatex, B x 3
+    B: dLoss_dOutput, F x B
+
+    output:
+    C: dLoss_dWeights, F x T
+  */
+
+  #pragma omp parallel for
+  for (int step = 0; step < steps; ++step) {
+
+    float x = data[A.offset + step * 3 + 0];
+    float y = data[A.offset + step * 3 + 1];
+    float z = data[A.offset + step * 3 + 2];
+
+    /* ======================= */
+
+    uint32_t x0 = (uint32_t)(x * (N - 1));
+    uint32_t x1 = (uint32_t)(x * (N - 1) + 1);
+
+    uint32_t y0 = (uint32_t)(y * (N - 1));
+    uint32_t y1 = (uint32_t)(y * (N - 1) + 1);
+
+    uint32_t z0 = (uint32_t)(z * (N - 1));
+    uint32_t z1 = (uint32_t)(z * (N - 1) + 1);
+
+    /* ======================= */ 
+
+    float wx = x * (N - 1) - x0;
+    float wy = y * (N - 1) - y0;
+    float wz = z * (N - 1) - z0;
+
+    /* ======================= */ 
+
+    uint32_t indices[8];
+    indices[0] = (x0 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[1] = (x0 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[2] = (x0 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[3] = (x0 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+    indices[4] = (x1 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[5] = (x1 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[6] = (x1 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[7] = (x1 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+
+    /* ======================= */ 
+
+    float weights[8];
+    weights[0] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
+    weights[1] = (1.0f - wx) * (1.0f - wy) * wz;
+    weights[2] = (1.0f - wx) * wy * (1.0f - wz);
+    weights[3] = (1.0f - wx) * wy * wz;
+    weights[4] = wx * (1.0f - wy) * (1.0f - wz);
+    weights[5] = wx * (1.0f - wy) * wz;
+    weights[6] = wx * wy * (1.0f - wz);
+    weights[7] = wx * wy * wz;
+
+    /* ======================= */ 
+
+    for(int i = 0; i < 8; ++i) {
+      float weight = weights[i];
+      int ind = indices[i];
+
+      for (int j = 0; j < F; ++j) {
+        data[C.offset + j * T + ind] += data[B.offset + j * steps + ind] * weight;
+      }
     }
   }
 }
