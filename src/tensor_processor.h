@@ -72,6 +72,7 @@ namespace nn
       MPOOL_3D, // C = 3D max pooling(A) with arbitrary window size
       MPOOL_3D_D,// derivative of 3D max pooling
       HASH_GRID_3D, // a surprise tool that will help us later
+      HASH_GRID_3D_COEFS,
       
       CMD_COUNT
     };

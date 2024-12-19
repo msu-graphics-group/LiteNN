@@ -1999,7 +1999,7 @@ void tp_test_1_tensor_processor()
 
     int batch_size = 5'000;
     unsigned img_size = 800 * 800;
-    int L = 16, T = 1024 * 0.25, F = 4, N_min = 4, N_max = 32;
+    int L = 16, T = 1024 * 2, F = 4, N_min = 4, N_max = 32;
 
     NeuralNetwork nn2;
     unsigned dim = 512;

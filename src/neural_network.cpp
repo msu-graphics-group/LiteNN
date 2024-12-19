@@ -301,7 +301,7 @@ namespace nn
     TensorToken input = TensorToken(i_shape); compiler.input(input, "In");
     TensorToken target_output = TensorToken(o_shape); compiler.input(target_output, "Out");
     TensorToken w = TensorToken(total_params); compiler.inout(w, "W");
-    
+
     unsigned offset = 0;
     for (auto &l : layers)
     {
@@ -445,6 +445,7 @@ namespace nn
     unsigned iters_per_epoch = std::max(1u, count/batch_size);
     unsigned iterations = epochs * iters_per_epoch;
     unsigned iters_per_validation = std::max(100u, iters_per_epoch);
+    iters_per_validation = 10;
 
     float start_learning_rate = 0;
     float end_learning_rate = 0;

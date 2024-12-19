@@ -311,8 +311,13 @@ void TensorProcessorImpl::process(const nn::TensorProgram &program)
     case nn::TensorProgram::HASH_GRID_3D:
     {
       unsigned steps = A.sizes[1];
-      float b = *(float*)(&arg4);
-      kernel1D_hash_grid_3D(memory.data(), steps, arg0, arg1, arg2, b, A, C);
+      kernel1D_hash_grid_3D(memory.data(), steps, arg0, arg1, arg2, A, B, C);
+    }
+      break;
+    case nn::TensorProgram::HASH_GRID_3D_COEFS:
+    {
+      unsigned steps = A.sizes[1];
+      kernel1D_hash_grid_3D_coefs(memory.data(), steps, arg0, arg1, A, C);
     }
       break;
     default:
@@ -1068,8 +1073,82 @@ void TensorProcessorImpl::kernel3D_max_pool_3D_diff(float *data, int steps, int 
 #define PI_2 2654435761u
 #define PI_3 805459861
 
-void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, float b, Variable A, Variable C)
+void TensorProcessorImpl::kernel1D_hash_grid_3D(float *data, int steps, int T, int F, int N, Variable A, Variable B, Variable C)
 {
+  /*
+    read input coordinates (x, y, z) from A and put embedding of size F into C from table B
+    (for one layer of dimension N, table size T and embedding size F) 
+  */
+
+  #pragma omp parallel for
+  for (int step = 0; step < steps; ++step) {
+    float x = data[A.offset + step * 3 + 0];
+    float y = data[A.offset + step * 3 + 1];
+    float z = data[A.offset + step * 3 + 2];
+
+    /* ======================= */
+
+    uint32_t x0 = (uint32_t)(x * (N - 1));
+    uint32_t x1 = (uint32_t)(x * (N - 1) + 1);
+
+    uint32_t y0 = (uint32_t)(y * (N - 1));
+    uint32_t y1 = (uint32_t)(y * (N - 1) + 1);
+
+    uint32_t z0 = (uint32_t)(z * (N - 1));
+    uint32_t z1 = (uint32_t)(z * (N - 1) + 1);
+
+    /* ======================= */ 
+
+    float wx = x * (N - 1) - x0;
+    float wy = y * (N - 1) - y0;
+    float wz = z * (N - 1) - z0;
+
+    /* ======================= */ 
+
+    uint32_t indices[8];
+    indices[0] = (x0 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[1] = (x0 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[2] = (x0 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[3] = (x0 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+    indices[4] = (x1 * PI_1 ^ y0 * PI_2 ^ z0 * PI_3) % T;
+    indices[5] = (x1 * PI_1 ^ y0 * PI_2 ^ z1 * PI_3) % T;
+    indices[6] = (x1 * PI_1 ^ y1 * PI_2 ^ z0 * PI_3) % T;
+    indices[7] = (x1 * PI_1 ^ y1 * PI_2 ^ z1 * PI_3) % T;
+
+    /* ======================= */ 
+
+    float weights[8];
+    weights[0] = (1.0f - wx) * (1.0f - wy) * (1.0f - wz);
+    weights[1] = (1.0f - wx) * (1.0f - wy) * wz;
+    weights[2] = (1.0f - wx) * wy * (1.0f - wz);
+    weights[3] = (1.0f - wx) * wy * wz;
+    weights[4] = wx * (1.0f - wy) * (1.0f - wz);
+    weights[5] = wx * (1.0f - wy) * wz;
+    weights[6] = wx * wy * (1.0f - wz);
+    weights[7] = wx * wy * wz;
+
+    /* ======================= */ 
+
+    for (int i = 0; i < F; ++i) {
+      data[C.offset + step * F + i] = 0;
+    }
+
+    for(int i = 0; i < 8; ++i) {
+      for (int j = 0; j < F; ++j) {
+        data[C.offset + step * F + j] += data[B.offset + indices[i] * F + j] * weights[i];
+      }
+    }
+  }
+}
+
+
+void TensorProcessorImpl::kernel1D_hash_grid_3D_coefs(float *data, int steps, int T, int N, Variable A, Variable C)
+{
+  /*
+    read input coordinates (x, y, z) from A and put T coefficients into C
+    (for one layer of dimension N and table size T)
+  */
+
   #pragma omp parallel for
   for (int step = 0; step < steps; ++step) {
 
